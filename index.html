@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -12,7 +13,7 @@
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:Arial, Helvetica, sans-serif;
+font-family:Arial;
 }
 
 body{
@@ -20,6 +21,7 @@ background: linear-gradient(45deg,#3a0ca3,#7209b7,#f72585);
 background-size:300% 300%;
 animation:bg 10s infinite alternate;
 color:white;
+overflow-x:hidden;
 }
 
 @keyframes bg{
@@ -27,7 +29,7 @@ color:white;
 100%{background-position:right}
 }
 
-/* MENU */
+/* NAV */
 
 nav{
 display:flex;
@@ -42,8 +44,8 @@ z-index:1000;
 
 .logo{
 font-size:24px;
-font-weight:bold;
 color:#ff00ff;
+font-weight:bold;
 }
 
 .menu{
@@ -52,15 +54,22 @@ gap:20px;
 }
 
 .menu a{
-text-decoration:none;
 color:white;
+text-decoration:none;
 font-weight:bold;
 transition:.3s;
 }
 
 .menu a:hover{
 color:#ffea00;
-transform:scale(1.2);
+}
+
+/* MENU MOBILE */
+
+.hamburguer{
+display:none;
+font-size:28px;
+cursor:pointer;
 }
 
 /* HERO */
@@ -72,6 +81,7 @@ flex-direction:column;
 align-items:center;
 justify-content:center;
 text-align:center;
+padding:20px;
 }
 
 .hero h1{
@@ -114,6 +124,7 @@ background:black;
 border-radius:15px;
 overflow:hidden;
 transition:.4s;
+cursor:pointer;
 }
 
 .card:hover{
@@ -131,7 +142,7 @@ object-fit:cover;
 padding:10px;
 }
 
-/* STAND EFFECT */
+/* STAND */
 
 #standEffect{
 position:fixed;
@@ -146,8 +157,31 @@ align-items:center;
 justify-content:center;
 opacity:0;
 color:#ffea00;
-text-shadow:0 0 30px #ff00ff;
+text-shadow:0 0 40px #ff00ff;
 transition:.5s;
+}
+
+/* PARTICULAS */
+
+.particle{
+position:fixed;
+width:10px;
+height:10px;
+background:white;
+border-radius:50%;
+pointer-events:none;
+animation:particle 1s linear;
+}
+
+@keyframes particle{
+0%{
+transform:translateY(0);
+opacity:1;
+}
+100%{
+transform:translateY(-200px);
+opacity:0;
+}
 }
 
 /* FOOTER */
@@ -163,35 +197,50 @@ margin-top:40px;
 
 @media(max-width:700px){
 
-.hero h1{
-font-size:32px;
+.menu{
+display:none;
+flex-direction:column;
+background:black;
+position:absolute;
+top:60px;
+right:0;
+width:200px;
+padding:20px;
 }
 
-.menu{
-gap:10px;
-font-size:14px;
+.menu.active{
+display:flex;
+}
+
+.hamburguer{
+display:block;
+}
+
+.hero h1{
+font-size:32px;
 }
 
 }
 
 </style>
+
 </head>
 
 <body>
 
-<!-- MENU -->
-
 <nav>
+
 <div class="logo">JOJO</div>
 
-<div class="menu">
+<div class="hamburguer" onclick="menu()">☰</div>
+
+<div class="menu" id="menu">
 <a href="#">Início</a>
 <a href="#galeria">Personagens</a>
 <a href="#">Stands</a>
 </div>
-</nav>
 
-<!-- HERO -->
+</nav>
 
 <section class="hero">
 
@@ -207,30 +256,28 @@ font-size:14px;
 
 </section>
 
-<!-- GALERIA -->
-
 <section class="galeria" id="galeria">
 
 <h2>Personagens</h2>
 
 <div class="grid">
 
-<div class="card">
+<div class="card" onclick="personagem('ORA ORA ORA')">
 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTQvTL2UjHyvXHLM3yEjxPDY6UB3aLBMZZPukTyj6BBw&s=10">
 <h3>Jotaro Kujo</h3>
 </div>
 
-<div class="card">
+<div class="card" onclick="personagem('ZA WARUDO')">
 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwNdPWTEAxIudRE6K4aXVIlc3O8B_Ak7FQn5d4u5PY1YwZxKUpbqMGn-A&s=10">
 <h3>Dio Brando</h3>
 </div>
 
-<div class="card">
+<div class="card" onclick="personagem('MUDA MUDA')">
 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbsReXi2wnbjbK0H8n4_mS9AHW6HJJC8xmS4A4yPmuAg&s=10">
 <h3>Giorno Giovanna</h3>
 </div>
 
-<div class="card">
+<div class="card" onclick="personagem('DORA DORA')">
 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdjs0ziQheNAhfitjZYwgMwuLyCXQEHJJMeFVrJF18oA&s=10">
 <h3>Josuke Higashikata</h3>
 </div>
@@ -239,18 +286,24 @@ font-size:14px;
 
 </section>
 
-<div id="standEffect">ZA WARUDO</div>
+<div id="standEffect"></div>
 
 <footer>
-  Site criado por um desocupado 😉
+Site criado por um desocupado 😉
 </footer>
 
+<!-- YOUTUBE PLAYER -->
 
-<!-- MUSICA -->
-
-<audio id="musicaTema" loop>
-<source src="https://www.myinstants.com/media/sounds/za-warudo.mp3">
-</audio>
+<div style="display:none;">
+<iframe
+id="player"
+width="0"
+height="0"
+src=""
+frameborder="0"
+allow="autoplay">
+</iframe>
+</div>
 
 <script>
 
@@ -258,14 +311,18 @@ let tocando=false
 
 function musica(){
 
-let audio=document.getElementById("musicaTema")
+let player=document.getElementById("player")
 
 if(!tocando){
-audio.play()
+
+player.src="https://www.youtube.com/embed/wtrFQLivuCg?autoplay=1"
 tocando=true
+
 }else{
-audio.pause()
+
+player.src=""
 tocando=false
+
 }
 
 }
@@ -274,11 +331,59 @@ function stand(){
 
 let efeito=document.getElementById("standEffect")
 
+efeito.innerText="ZA WARUDO"
+
 efeito.style.opacity="1"
+
+particles()
 
 setTimeout(()=>{
 efeito.style.opacity="0"
 },1500)
+
+}
+
+function personagem(texto){
+
+let efeito=document.getElementById("standEffect")
+
+efeito.innerText=texto
+
+efeito.style.opacity="1"
+
+particles()
+
+setTimeout(()=>{
+efeito.style.opacity="0"
+},1500)
+
+}
+
+function particles(){
+
+for(let i=0;i<30;i++){
+
+let p=document.createElement("div")
+
+p.className="particle"
+
+p.style.left=Math.random()*100+"%"
+
+p.style.top=Math.random()*100+"%"
+
+document.body.appendChild(p)
+
+setTimeout(()=>p.remove(),1000)
+
+}
+
+}
+
+function menu(){
+
+let m=document.getElementById("menu")
+
+m.classList.toggle("active")
 
 }
 
