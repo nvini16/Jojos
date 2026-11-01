@@ -781,14 +781,34 @@ verso.append(tituloVerso,botaoEditar,botaoStand,botaoExcluir)
 virador.append(frente,verso)
 cena.appendChild(virador)
 
+function voltarFrente(){
+cena.classList.remove("virado")
+verso.inert=true
+frente.inert=false
+frente.focus()
+}
+
 frente.addEventListener("click",function(){
-const estavaVirado=cena.classList.contains("virado")
-document.querySelectorAll(".card-scene.virado").forEach(function(card){card.classList.remove("virado")})
-if(!estavaVirado){
+document.querySelectorAll(".card-scene.virado").forEach(function(card){
+card.classList.remove("virado")
+card.querySelector(".card-verso").inert=true
+card.querySelector(".card-frente").inert=false
+})
 cena.classList.add("virado")
 frente.inert=true
 verso.inert=false
 botaoEditar.focus()
+})
+
+verso.addEventListener("click",function(event){
+if(event.target.closest("button")) return
+voltarFrente()
+})
+
+verso.addEventListener("keydown",function(event){
+if(event.key==="Escape"){
+event.preventDefault()
+voltarFrente()
 }
 })
 return cena
