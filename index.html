@@ -283,32 +283,73 @@ outline-offset:4px;
 }
 
 .painel-formulario{
-width:min(100% - 32px,520px);
-margin:24px auto 0;
-padding:24px;
+width:min(100% - 32px,560px);
+margin:26px auto 0;
+padding:clamp(18px,4vw,28px);
 border:1px solid rgba(255,255,255,.35);
-border-radius:16px;
-background:#171020;
+border-radius:18px;
+background:linear-gradient(145deg,#1d1429,#120d1b);
+box-shadow:0 16px 42px rgba(0,0,0,.28);
 text-align:left;
 }
 
 .painel-formulario[hidden]{display:none;}
 
-.formulario-personagem{
-display:grid;
+.cabecalho-formulario{
+display:flex;
+justify-content:space-between;
+align-items:center;
 gap:14px;
+margin-bottom:24px;
 }
 
-.formulario-personagem label{font-weight:bold;}
+.cabecalho-formulario h3{
+font-size:1.2rem;
+line-height:1.3;
+}
+
+.formulario-personagem{
+display:grid;
+gap:22px;
+}
+
+.campo-nome-personagem,
+.campo-imagem-personagem{
+display:grid;
+gap:10px;
+}
+
+.formulario-personagem label{
+font-weight:bold;
+line-height:1.4;
+}
 
 .formulario-personagem input[type="text"]{
 width:100%;
-padding:11px;
-border:1px solid #aaa;
-border-radius:8px;
-background:#fff;
-color:#171717;
+min-height:48px;
+padding:13px 15px;
+border:1.5px solid rgba(255,255,255,.3);
+border-radius:10px;
+background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.05));
+color:#fff;
 font:inherit;
+transition:border-color .2s,box-shadow .2s,background .2s;
+}
+
+.formulario-personagem input[type="text"]::placeholder{
+color:#b9afc5;
+opacity:1;
+}
+
+.formulario-personagem input[type="text"]:hover{
+border-color:rgba(255,234,0,.65);
+}
+
+.formulario-personagem input[type="text"]:focus-visible{
+outline:none;
+border-color:#ffea00;
+background:rgba(255,234,0,.07);
+box-shadow:0 0 0 3px rgba(255,234,0,.18);
 }
 
 .campo-imagem-personagem{display:grid;gap:9px;}
@@ -383,7 +424,13 @@ background:rgba(0,0,0,.35);
 .acoes-formulario{
 display:flex;
 flex-wrap:wrap;
-gap:10px;
+gap:12px;
+margin-top:4px;
+}
+
+.acoes-formulario button:disabled{
+opacity:.65;
+cursor:wait;
 }
 
 .acoes-formulario button,
@@ -552,12 +599,12 @@ font-size:32px;
 </div>
 
 <section class="painel-formulario" id="painelFormularioPersonagem" aria-labelledby="tituloFormularioPersonagem" hidden>
-<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
+<div class="cabecalho-formulario">
 <h3 id="tituloFormularioPersonagem">Novo personagem</h3>
 <button class="fechar-formulario" id="fecharFormularioPersonagem" type="button" aria-label="Fechar formulário">Fechar</button>
 </div>
 <form class="formulario-personagem" id="formularioPersonagem">
-<div>
+<div class="campo-nome-personagem">
 <label for="nomeNovoPersonagem">Nome do personagem</label>
 <input id="nomeNovoPersonagem" name="nome" type="text" maxlength="60" required autocomplete="off" placeholder="Ex.: Joseph Joestar">
 </div>
