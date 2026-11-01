@@ -301,8 +301,7 @@ gap:14px;
 
 .formulario-personagem label{font-weight:bold;}
 
-.formulario-personagem input[type="text"],
-.formulario-personagem input[type="file"]{
+.formulario-personagem input[type="text"]{
 width:100%;
 padding:11px;
 border:1px solid #aaa;
@@ -310,6 +309,71 @@ border-radius:8px;
 background:#fff;
 color:#171717;
 font:inherit;
+}
+
+.campo-imagem-personagem{display:grid;gap:9px;}
+
+.seletor-imagem{
+position:relative;
+display:grid;
+place-items:center;
+gap:9px;
+min-height:154px;
+padding:22px;
+overflow:hidden;
+border:1.5px dashed rgba(255,234,0,.65);
+border-radius:14px;
+background:linear-gradient(145deg,rgba(255,234,0,.09),rgba(255,0,255,.07));
+color:#fff;
+text-align:center;
+cursor:pointer;
+transition:border-color .2s,background .2s,transform .2s;
+}
+
+.seletor-imagem:hover{
+border-color:#ffea00;
+background:linear-gradient(145deg,rgba(255,234,0,.16),rgba(255,0,255,.12));
+}
+
+.seletor-imagem:focus-within{
+outline:3px solid #fff;
+outline-offset:4px;
+}
+
+.icone-upload{
+display:grid;
+place-items:center;
+width:42px;
+height:42px;
+border:1px solid rgba(255,234,0,.5);
+border-radius:12px;
+color:#ffea00;
+font-size:23px;
+}
+
+.texto-upload{font-weight:bold;}
+.detalhe-upload{color:#c9c2d0;font-size:.88rem;}
+.nome-arquivo{max-width:100%;color:#ffea00;font-size:.9rem;overflow-wrap:anywhere;}
+
+.input-imagem-real{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+opacity:0;
+cursor:pointer;
+}
+
+.preview-personagem{
+display:block;
+width:100%;
+max-width:220px;
+height:180px;
+object-fit:contain;
+padding:8px;
+border:1px solid rgba(255,255,255,.2);
+border-radius:12px;
+background:rgba(0,0,0,.35);
 }
 
 .preview-personagem{
@@ -504,10 +568,16 @@ font-size:32px;
 <label for="nomeNovoPersonagem">Nome do personagem</label>
 <input id="nomeNovoPersonagem" name="nome" type="text" maxlength="60" required autocomplete="off" placeholder="Ex.: Joseph Joestar">
 </div>
-<div>
+<div class="campo-imagem-personagem">
 <label for="imagemNovoPersonagem">Imagem do personagem</label>
-<input id="imagemNovoPersonagem" name="imagem" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-describedby="ajudaImagemPersonagem">
-<small id="ajudaImagemPersonagem">Escolha PNG, JPG, WEBP ou GIF. Tamanho máximo: 3 MB.</small>
+<label class="seletor-imagem" for="imagemNovoPersonagem">
+<span class="icone-upload" aria-hidden="true">↑</span>
+<span class="texto-upload">Clique para escolher uma imagem</span>
+<span class="detalhe-upload">ou selecione um arquivo do seu dispositivo</span>
+<span class="nome-arquivo" id="nomeArquivoPersonagem" aria-live="polite">Nenhum arquivo selecionado</span>
+<input class="input-imagem-real" id="imagemNovoPersonagem" name="imagem" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-describedby="ajudaImagemPersonagem">
+</label>
+<small id="ajudaImagemPersonagem">PNG, JPG, WEBP ou GIF · máximo de 3 MB.</small>
 </div>
 <img class="preview-personagem" id="previewNovoPersonagem" alt="Pré-visualização da imagem escolhida" hidden>
 <p class="mensagem-formulario" id="mensagemFormularioPersonagem" role="status" aria-live="polite"></p>
@@ -864,6 +934,7 @@ previewNovoPersonagem.hidden=true
 function abrirFormularioNovoPersonagem(){
 idPersonagemEditando=null
 formularioPersonagem.reset()
+document.getElementById("nomeArquivoPersonagem").textContent="Nenhum arquivo selecionado"
 limparPreviewPersonagem()
 tituloFormularioPersonagem.textContent="Novo personagem"
 botaoSalvarPersonagem.textContent="Adicionar à galeria"
@@ -887,6 +958,7 @@ const registro=await acessarPersonagens("readonly",function(store){return store.
 if(!registro) throw new Error("Personagem não encontrado.")
 idPersonagemEditando=id
 formularioPersonagem.reset()
+document.getElementById("nomeArquivoPersonagem").textContent="Nenhum arquivo selecionado"
 limparPreviewPersonagem()
 nomeNovoPersonagem.value=registro.nome
 tituloFormularioPersonagem.textContent="Editar personagem"
@@ -929,9 +1001,12 @@ document.getElementById("cancelarNovoPersonagem").addEventListener("click",fecha
 imagemNovoPersonagem.addEventListener("change",function(){
 limparPreviewPersonagem()
 const arquivo=imagemNovoPersonagem.files[0]
+const nomeArquivo=document.getElementById("nomeArquivoPersonagem")
+nomeArquivo.textContent=arquivo ? arquivo.name : "Nenhum arquivo selecionado"
 if(!arquivo) return
 if(!["image/jpeg","image/png","image/webp","image/gif"].includes(arquivo.type) || arquivo.size>limiteImagemPersonagem){
 imagemNovoPersonagem.value=""
+nomeArquivo.textContent="Nenhum arquivo selecionado"
 mensagemFormularioPersonagem.textContent="Arquivo inválido. Use PNG, JPG, WEBP ou GIF de até 3 MB."
 return
 }
