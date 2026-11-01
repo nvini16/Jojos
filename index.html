@@ -168,6 +168,91 @@ object-fit:cover;
 padding:10px;
 }
 
+/* CARTÕES COM VIRADA E AÇÕES */
+
+.card-scene{
+perspective:1000px;
+min-height:310px;
+}
+
+.card-flipper{
+position:relative;
+width:100%;
+height:310px;
+transform-style:preserve-3d;
+transition:transform .65s ease;
+}
+
+.card-scene.virado .card-flipper{transform:rotateY(180deg);}
+
+.card-face{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+border:0;
+border-radius:15px;
+overflow:hidden;
+backface-visibility:hidden;
+-webkit-backface-visibility:hidden;
+background:#090909;
+color:#fff;
+}
+
+.card-frente{
+display:flex;
+flex-direction:column;
+align-items:stretch;
+cursor:pointer;
+}
+
+.card-frente img{
+width:100%;
+height:260px;
+object-fit:cover;
+}
+
+.card-frente h3{padding:12px;}
+
+.card-verso{
+transform:rotateY(180deg);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:14px;
+padding:18px;
+border:1px solid rgba(255,255,255,.25);
+background:linear-gradient(145deg,#171020,#3a0ca3);
+}
+
+.card-verso h3{font-size:20px;}
+
+.card-verso button{
+width:min(100%,190px);
+padding:10px 14px;
+border:0;
+border-radius:8px;
+font:inherit;
+font-weight:bold;
+cursor:pointer;
+}
+
+.card-editar{background:#ffea00;color:#171717;}
+.card-stand{background:#ff0080;color:#171717;}
+.card-excluir{background:#a30025;color:#fff;}
+
+.card-face button:focus-visible{
+outline:3px solid #fff;
+outline-offset:-5px;
+}
+
+.card[hidden],.card-scene[hidden]{display:none;}
+
+@media(prefers-reduced-motion:reduce){
+.card-flipper{transition:none;}
+}
+
 /* ADICIONAR PERSONAGEM */
 
 .acoes-galeria{
@@ -421,7 +506,7 @@ font-size:32px;
 </div>
 <div>
 <label for="imagemNovoPersonagem">Imagem do personagem</label>
-<input id="imagemNovoPersonagem" name="imagem" type="file" accept="image/png,image/jpeg,image/webp,image/gif" required aria-describedby="ajudaImagemPersonagem">
+<input id="imagemNovoPersonagem" name="imagem" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-describedby="ajudaImagemPersonagem">
 <small id="ajudaImagemPersonagem">Escolha PNG, JPG, WEBP ou GIF. Tamanho máximo: 3 MB.</small>
 </div>
 <img class="preview-personagem" id="previewNovoPersonagem" alt="Pré-visualização da imagem escolhida" hidden>
@@ -435,25 +520,7 @@ font-size:32px;
 
 <div class="grid" id="gradePersonagens">
 
-<button class="card" type="button" aria-label="Ativar Stand de Jotaro Kujo" onclick="personagem('ORA ORA ORA')">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTQvTL2UjHyvXHLM3yEjxPDY6UB3aLBMZZPukTyj6BBw&s=10" alt="Retrato de Jotaro Kujo" loading="lazy" decoding="async" width="400" height="250">
-<h3>Jotaro Kujo</h3>
-</button>
 
-<button class="card" type="button" aria-label="Ativar Stand de Dio Brando" onclick="personagem('ZA WARUDO')">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwNdPWTEAxIudRE6K4aXVIlc3O8B_Ak7FQn5d4u5PY1YwZxKUpbqMGn-A&s=10" alt="Retrato de Dio Brando" loading="lazy" decoding="async" width="400" height="250">
-<h3>Dio Brando</h3>
-</button>
-
-<button class="card" type="button" aria-label="Ativar Stand de Giorno Giovanna" onclick="personagem('MUDA MUDA')">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbsReXi2wnbjbK0H8n4_mS9AHW6HJJC8xmS4A4yPmuAg&s=10" alt="Retrato de Giorno Giovanna" loading="lazy" decoding="async" width="400" height="250">
-<h3>Giorno Giovanna</h3>
-</button>
-
-<button class="card" type="button" aria-label="Ativar Stand de Josuke Higashikata" onclick="personagem('DORA DORA')">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdjs0ziQheNAhfitjZYwgMwuLyCXQEHJJMeFVrJF18oA&s=10" alt="Retrato de Josuke Higashikata" loading="lazy" decoding="async" width="400" height="250">
-<h3>Josuke Higashikata</h3>
-</button>
 
 </div>
 
@@ -607,7 +674,7 @@ document.querySelector(".hamburguer").focus()
 
 })
 
-// PERSONAGENS PERSONALIZADOS: armazenados localmente no navegador (IndexedDB).
+// PERSONAGENS: registros locais no IndexedDB; cartões base e personalizados usam o mesmo fluxo.
 const abrirFormularioPersonagem=document.getElementById("abrirFormularioPersonagem")
 const painelFormularioPersonagem=document.getElementById("painelFormularioPersonagem")
 const formularioPersonagem=document.getElementById("formularioPersonagem")
@@ -616,13 +683,22 @@ const imagemNovoPersonagem=document.getElementById("imagemNovoPersonagem")
 const previewNovoPersonagem=document.getElementById("previewNovoPersonagem")
 const mensagemFormularioPersonagem=document.getElementById("mensagemFormularioPersonagem")
 const gradePersonagens=document.getElementById("gradePersonagens")
+const tituloFormularioPersonagem=document.getElementById("tituloFormularioPersonagem")
+const botaoSalvarPersonagem=document.getElementById("salvarNovoPersonagem")
 const limiteImagemPersonagem=3*1024*1024
+const personagensIniciais=[
+{chave:"base-jotaro",nome:"Jotaro Kujo",imagemUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTQvTL2UjHyvXHLM3yEjxPDY6UB3aLBMZZPukTyj6BBw&s=10",stand:"ORA ORA ORA"},
+{chave:"base-dio",nome:"Dio Brando",imagemUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwNdPWTEAxIudRE6K4aXVIlc3O8B_Ak7FQn5d4u5PY1YwZxKUpbqMGn-A&s=10",stand:"ZA WARUDO"},
+{chave:"base-giorno",nome:"Giorno Giovanna",imagemUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbsReXi2wnbjbK0H8n4_mS9AHW6HJJC8xmS4A4yPmuAg&s=10",stand:"MUDA MUDA"},
+{chave:"base-josuke",nome:"Josuke Higashikata",imagemUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdjs0ziQheNAhfitjZYwgMwuLyCXQEHJJMeFVrJF18oA&s=10",stand:"DORA DORA"}
+]
 let urlPreviewPersonagem=null
 let bancoPersonagens=null
+let idPersonagemEditando=null
 
 function abrirBancoPersonagens(){
 return new Promise(function(resolve,reject){
-const requisicao=indexedDB.open("jojos-personagens",1)
+const requisicao=indexedDB.open("jojos-personagens",2)
 requisicao.onupgradeneeded=function(){
 const banco=requisicao.result
 if(!banco.objectStoreNames.contains("personagens")){
@@ -637,55 +713,114 @@ requisicao.onerror=function(){reject(requisicao.error)}
 function acessarPersonagens(modo,operacao){
 return new Promise(function(resolve,reject){
 const transacao=bancoPersonagens.transaction("personagens",modo)
-const requisicao=operacao(transacao.objectStore("personagens"))
+const store=transacao.objectStore("personagens")
+const requisicao=operacao(store)
 requisicao.onsuccess=function(){resolve(requisicao.result)}
 requisicao.onerror=function(){reject(requisicao.error)}
 })
 }
 
-function criarCardPersonagem(personagemSalvo){
-const card=document.createElement("button")
-card.className="card"
-card.type="button"
-card.setAttribute("aria-label","Exibir personagem "+personagemSalvo.nome)
-card.addEventListener("click",function(){personagem(personagemSalvo.nome)})
+function urlDaImagemPersonagem(registro){
+if(registro.imagem instanceof Blob) return URL.createObjectURL(registro.imagem)
+return registro.imagemUrl || ""
+}
+
+function criarCardPersonagem(registro){
+const cena=document.createElement("article")
+cena.className="card-scene"
+cena.dataset.personagemId=String(registro.id)
+
+const virador=document.createElement("div")
+virador.className="card-flipper"
+
+const frente=document.createElement("button")
+frente.className="card-face card-frente"
+frente.type="button"
+frente.setAttribute("aria-label","Virar cartão de "+registro.nome+" para ver opções")
 
 const imagem=document.createElement("img")
-const urlImagem=URL.createObjectURL(personagemSalvo.imagem)
+const urlImagem=urlDaImagemPersonagem(registro)
 imagem.src=urlImagem
-imagem.alt="Retrato de "+personagemSalvo.nome
+imagem.alt="Retrato de "+registro.nome
 imagem.loading="lazy"
 imagem.decoding="async"
 imagem.width=400
 imagem.height=250
+if(registro.imagem instanceof Blob){
 imagem.addEventListener("load",function(){URL.revokeObjectURL(urlImagem)},{once:true})
+}
 
 const titulo=document.createElement("h3")
-titulo.textContent=personagemSalvo.nome
+titulo.textContent=registro.nome
+frente.append(imagem,titulo)
 
-card.append(imagem,titulo)
-gradePersonagens.appendChild(card)
-return card
+const verso=document.createElement("div")
+verso.className="card-face card-verso"
+verso.setAttribute("aria-label","Opções para "+registro.nome)
+
+const tituloVerso=document.createElement("h3")
+tituloVerso.textContent=registro.nome
+const botaoEditar=document.createElement("button")
+botaoEditar.type="button"
+botaoEditar.className="card-editar"
+botaoEditar.textContent="Editar personagem"
+botaoEditar.addEventListener("click",function(){editarPersonagem(registro.id)})
+const botaoStand=document.createElement("button")
+botaoStand.type="button"
+botaoStand.className="card-stand"
+botaoStand.textContent="Ativar Stand"
+botaoStand.addEventListener("click",function(){personagem(registro.stand || registro.nome)})
+const botaoExcluir=document.createElement("button")
+botaoExcluir.type="button"
+botaoExcluir.className="card-excluir"
+botaoExcluir.textContent="Excluir personagem"
+botaoExcluir.addEventListener("click",function(){excluirPersonagem(registro.id,registro.nome)})
+
+verso.append(tituloVerso,botaoEditar,botaoStand,botaoExcluir)
+virador.append(frente,verso)
+cena.appendChild(virador)
+
+frente.addEventListener("click",function(){
+const estavaVirado=cena.classList.contains("virado")
+document.querySelectorAll(".card-scene.virado").forEach(function(card){card.classList.remove("virado")})
+if(!estavaVirado){
+cena.classList.add("virado")
+botaoEditar.focus()
+}
+})
+return cena
+}
+
+async function renderizarPersonagens(){
+const registros=await acessarPersonagens("readonly",function(store){return store.getAll()})
+gradePersonagens.replaceChildren()
+registros.forEach(function(registro){gradePersonagens.appendChild(criarCardPersonagem(registro))})
+atualizarResultadoBusca()
 }
 
 async function carregarPersonagensSalvos(){
 try{
 bancoPersonagens=await abrirBancoPersonagens()
-const salvos=await acessarPersonagens("readonly",function(store){return store.getAll()})
-salvos.forEach(criarCardPersonagem)
-atualizarResultadoBusca()
+const existentes=await acessarPersonagens("readonly",function(store){return store.getAll()})
+const chaves=new Set(existentes.map(function(item){return item.chave}).filter(Boolean))
+for(const base of personagensIniciais){
+if(!chaves.has(base.chave)){
+await acessarPersonagens("readwrite",function(store){return store.add(base)})
+}
+}
+await renderizarPersonagens()
 }catch(erro){
-console.error("Não foi possível carregar os personagens salvos:",erro)
+console.error("Não foi possível carregar os personagens:",erro)
 mensagemFormularioPersonagem.textContent="O armazenamento local não está disponível neste navegador."
 }
 }
 
 function atualizarResultadoBusca(){
 const termo=buscaPersonagem.value.trim().toLocaleLowerCase("pt-BR")
-const todosCards=Array.from(gradePersonagens.querySelectorAll(".card"))
+const todosCards=Array.from(gradePersonagens.querySelectorAll(".card-scene"))
 let visiveis=0
 todosCards.forEach(function(card){
-const nome=card.querySelector("h3").textContent.toLocaleLowerCase("pt-BR")
+const nome=card.querySelector(".card-frente h3").textContent.toLocaleLowerCase("pt-BR")
 const corresponde=nome.includes(termo)
 card.hidden=!corresponde
 if(corresponde) visiveis++
@@ -703,18 +838,66 @@ previewNovoPersonagem.removeAttribute("src")
 previewNovoPersonagem.hidden=true
 }
 
+function abrirFormularioNovoPersonagem(){
+idPersonagemEditando=null
+formularioPersonagem.reset()
+limparPreviewPersonagem()
+tituloFormularioPersonagem.textContent="Novo personagem"
+botaoSalvarPersonagem.textContent="Adicionar à galeria"
+imagemNovoPersonagem.required=true
+painelFormularioPersonagem.hidden=false
+abrirFormularioPersonagem.setAttribute("aria-expanded","true")
+mensagemFormularioPersonagem.textContent=""
+nomeNovoPersonagem.focus()
+}
+
 function fecharFormularioNovoPersonagem(){
 painelFormularioPersonagem.hidden=true
 abrirFormularioPersonagem.setAttribute("aria-expanded","false")
+idPersonagemEditando=null
 abrirFormularioPersonagem.focus()
 }
 
-abrirFormularioPersonagem.addEventListener("click",function(){
+async function editarPersonagem(id){
+try{
+const registro=await acessarPersonagens("readonly",function(store){return store.get(id)})
+if(!registro) throw new Error("Personagem não encontrado.")
+idPersonagemEditando=id
+formularioPersonagem.reset()
+limparPreviewPersonagem()
+nomeNovoPersonagem.value=registro.nome
+tituloFormularioPersonagem.textContent="Editar personagem"
+botaoSalvarPersonagem.textContent="Salvar alterações"
+imagemNovoPersonagem.required=false
+if(registro.imagem instanceof Blob){
+urlPreviewPersonagem=URL.createObjectURL(registro.imagem)
+previewNovoPersonagem.src=urlPreviewPersonagem
+previewNovoPersonagem.hidden=false
+}else if(registro.imagemUrl){
+previewNovoPersonagem.src=registro.imagemUrl
+previewNovoPersonagem.hidden=false
+}
+mensagemFormularioPersonagem.textContent="Selecione uma nova imagem apenas se quiser trocá-la."
 painelFormularioPersonagem.hidden=false
 abrirFormularioPersonagem.setAttribute("aria-expanded","true")
 nomeNovoPersonagem.focus()
-})
+}catch(erro){
+console.error("Não foi possível abrir a edição:",erro)
+}
+}
 
+async function excluirPersonagem(id,nome){
+if(!window.confirm('Excluir "'+nome+'" da galeria? Essa ação não pode ser desfeita.')) return
+try{
+await acessarPersonagens("readwrite",function(store){return store.delete(id)})
+await renderizarPersonagens()
+}catch(erro){
+console.error("Não foi possível excluir o personagem:",erro)
+mensagemFormularioPersonagem.textContent="Não foi possível excluir o personagem."
+}
+}
+
+abrirFormularioPersonagem.addEventListener("click",abrirFormularioNovoPersonagem)
 document.getElementById("fecharFormularioPersonagem").addEventListener("click",fecharFormularioNovoPersonagem)
 document.getElementById("cancelarNovoPersonagem").addEventListener("click",fecharFormularioNovoPersonagem)
 
@@ -737,52 +920,71 @@ formularioPersonagem.addEventListener("submit",async function(event){
 event.preventDefault()
 const nome=nomeNovoPersonagem.value.trim()
 const imagem=imagemNovoPersonagem.files[0]
-if(!nome || !imagem){
-mensagemFormularioPersonagem.textContent="Preencha o nome e selecione uma imagem."
+if(!nome){
+mensagemFormularioPersonagem.textContent="Informe o nome do personagem."
 return
 }
-if(imagem.size>limiteImagemPersonagem || !["image/jpeg","image/png","image/webp","image/gif"].includes(imagem.type)){
+if(imagem && (!["image/jpeg","image/png","image/webp","image/gif"].includes(imagem.type) || imagem.size>limiteImagemPersonagem)){
 mensagemFormularioPersonagem.textContent="A imagem precisa ser PNG, JPG, WEBP ou GIF de até 3 MB."
 return
 }
-const botaoSalvar=document.getElementById("salvarNovoPersonagem")
-botaoSalvar.disabled=true
-mensagemFormularioPersonagem.textContent="Salvando personagem..."
+if(!idPersonagemEditando && !imagem){
+mensagemFormularioPersonagem.textContent="Selecione uma imagem para o novo personagem."
+return
+}
+botaoSalvarPersonagem.disabled=true
+mensagemFormularioPersonagem.textContent="Salvando..."
 try{
-const salvo=await acessarPersonagens("readwrite",function(store){
-return store.add({nome:nome,imagem:imagem,criadoEm:new Date().toISOString()})
+if(idPersonagemEditando){
+const atual=await acessarPersonagens("readonly",function(store){return store.get(idPersonagemEditando)})
+if(!atual) throw new Error("Personagem não encontrado.")
+atual.nome=nome
+if(imagem){
+atual.imagem=imagem
+delete atual.imagemUrl
+}
+await acessarPersonagens("readwrite",function(store){return store.put(atual)})
+}else{
+await acessarPersonagens("readwrite",function(store){
+return store.add({nome:nome,imagem:imagem,criadoEm:new Date().toISOString(),stand:nome})
 })
-const personagemSalvo={id:salvo,nome:nome,imagem:imagem}
-const card=criarCardPersonagem(personagemSalvo)
-buscaPersonagem.value=""
-atualizarResultadoBusca()
-card.scrollIntoView({behavior:prefereMovimentoReduzido.matches ? "auto" : "smooth",block:"nearest"})
+}
 formularioPersonagem.reset()
 limparPreviewPersonagem()
-mensagemFormularioPersonagem.textContent="Personagem adicionado à galeria."
-fecharFormularioNovoPersonagem()
+idPersonagemEditando=null
+painelFormularioPersonagem.hidden=true
+abrirFormularioPersonagem.setAttribute("aria-expanded","false")
+abrirFormularioPersonagem.focus()
+mensagemFormularioPersonagem.textContent="Alterações salvas."
+buscaPersonagem.value=""
+await renderizarPersonagens()
 }catch(erro){
 console.error("Não foi possível salvar o personagem:",erro)
 mensagemFormularioPersonagem.textContent="Não foi possível salvar. Verifique o espaço disponível no navegador."
 }finally{
-botaoSalvar.disabled=false
+botaoSalvarPersonagem.disabled=false
 }
 })
 
 document.addEventListener("keydown",function(event){
-if(event.key==="Escape" && !painelFormularioPersonagem.hidden){
+if(event.key==="Escape"){
+if(!painelFormularioPersonagem.hidden){
 fecharFormularioNovoPersonagem()
+}else{
+const virado=document.querySelector(".card-scene.virado")
+if(virado){
+virado.classList.remove("virado")
+virado.querySelector(".card-frente").focus()
+}
+}
 }
 })
 
 window.addEventListener("beforeunload",limparPreviewPersonagem)
 
 const buscaPersonagem=document.getElementById("buscaPersonagem")
-const cardsPersonagens=Array.from(document.querySelectorAll("#gradePersonagens .card"))
 const resultadoBusca=document.getElementById("resultadoBusca")
-
 buscaPersonagem.addEventListener("input",atualizarResultadoBusca)
-
 carregarPersonagensSalvos()
 
 </script>
