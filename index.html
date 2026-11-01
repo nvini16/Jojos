@@ -16,6 +16,18 @@
 --color-rose:#c9184a;
 --color-magenta:#ff00ff;
 --color-yellow:#ffea00;
+
+/* Identidade visual dos efeitos de Stand */
+--stand-jotaro:#48d9ff;
+--stand-jotaro-glow:rgba(72,217,255,.28);
+--stand-dio:#c58aff;
+--stand-dio-glow:rgba(197,138,255,.3);
+--stand-giorno:#ffd447;
+--stand-giorno-glow:rgba(255,212,71,.3);
+--stand-josuke:#ff79bd;
+--stand-josuke-glow:rgba(255,121,189,.28);
+--stand-custom:#7fffd4;
+--stand-custom-glow:rgba(127,255,212,.25);
 --color-pink:#ff0080;
 --color-danger:#a30025;
 
@@ -913,11 +925,11 @@ tocando=false
 
 let temporizadorStand=null
 const estilosStand={
-"base-jotaro":{classe:"fx-jotaro",cor:"#48d9ff",brilho:"rgba(72,217,255,.28)",particulas:24},
-"base-dio":{classe:"fx-dio",cor:"#c58aff",brilho:"rgba(197,138,255,.3)",particulas:30},
-"base-giorno":{classe:"fx-giorno",cor:"#ffd447",brilho:"rgba(255,212,71,.3)",particulas:26},
-"base-josuke":{classe:"fx-josuke",cor:"#ff79bd",brilho:"rgba(255,121,189,.28)",particulas:22},
-"custom":{classe:"fx-custom",cor:"#7fffd4",brilho:"rgba(127,255,212,.25)",particulas:20}
+"base-jotaro":{classe:"fx-jotaro",cor:"var(--stand-jotaro)",brilho:"var(--stand-jotaro-glow)",particulas:24},
+"base-dio":{classe:"fx-dio",cor:"var(--stand-dio)",brilho:"var(--stand-dio-glow)",particulas:30},
+"base-giorno":{classe:"fx-giorno",cor:"var(--stand-giorno)",brilho:"var(--stand-giorno-glow)",particulas:26},
+"base-josuke":{classe:"fx-josuke",cor:"var(--stand-josuke)",brilho:"var(--stand-josuke-glow)",particulas:22},
+"custom":{classe:"fx-custom",cor:"var(--stand-custom)",brilho:"var(--stand-custom-glow)",particulas:20}
 }
 
 function stand(){
