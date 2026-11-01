@@ -223,8 +223,34 @@ padding:10px;
 /* CARTÕES COM VIRADA E AÇÕES */
 
 .card-scene{
+display:flex;
+flex-direction:column;
 perspective:1000px;
-min-height:310px;
+min-height:360px;
+}
+
+.card-stand-externo{
+width:100%;
+margin-top:12px;
+padding:11px 14px;
+border:0;
+border-radius:9px;
+background:var(--color-pink);
+color:var(--color-text-dark);
+font:inherit;
+font-weight:bold;
+cursor:pointer;
+transition:filter .2s,transform .2s;
+}
+
+.card-stand-externo:hover{
+filter:brightness(1.12);
+transform:translateY(-2px);
+}
+
+.card-stand-externo:focus-visible{
+outline:3px solid var(--color-yellow);
+outline-offset:3px;
 }
 
 .card-flipper{
@@ -930,8 +956,8 @@ botaoEditar.textContent="Editar personagem"
 botaoEditar.addEventListener("click",function(){editarPersonagem(registro.id)})
 const botaoStand=document.createElement("button")
 botaoStand.type="button"
-botaoStand.className="card-stand"
-botaoStand.textContent="Ativar Stand"
+botaoStand.className="card-stand-externo"
+botaoStand.textContent="Ativar Stand de "+registro.nome
 botaoStand.addEventListener("click",function(){personagem(registro.stand || registro.nome)})
 const botaoExcluir=document.createElement("button")
 botaoExcluir.type="button"
@@ -939,9 +965,9 @@ botaoExcluir.className="card-excluir"
 botaoExcluir.textContent="Excluir personagem"
 botaoExcluir.addEventListener("click",function(){excluirPersonagem(registro.id,registro.nome)})
 
-verso.append(tituloVerso,botaoEditar,botaoStand,botaoExcluir)
+verso.append(tituloVerso,botaoEditar,botaoExcluir)
 virador.append(frente,verso)
-cena.appendChild(virador)
+cena.append(virador,botaoStand)
 
 function voltarFrente(){
 cena.classList.remove("virado")
