@@ -70,6 +70,11 @@ color:#ffea00;
 display:none;
 font-size:28px;
 cursor:pointer;
+padding:4px 8px;
+border:0;
+background:transparent;
+color:white;
+line-height:1;
 }
 
 /* HERO */
@@ -112,6 +117,14 @@ padding:50px 20px;
 text-align:center;
 }
 
+.stands{
+padding:35px 20px;
+text-align:center;
+background:rgba(0,0,0,.25);
+}
+
+.stands p{margin-top:10px;}
+
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -121,7 +134,13 @@ margin-top:30px;
 
 .card{
 background:black;
+border:0;
 border-radius:15px;
+color:white;
+font:inherit;
+text-align:center;
+width:100%;
+padding:0;
 overflow:hidden;
 transition:.4s;
 cursor:pointer;
@@ -130,6 +149,13 @@ cursor:pointer;
 .card:hover{
 transform:scale(1.08);
 box-shadow:0 0 20px #fff;
+}
+
+.card:focus-visible,
+.hamburguer:focus-visible,
+.hero button:focus-visible{
+outline:3px solid #ffea00;
+outline-offset:4px;
 }
 
 .card img{
@@ -211,10 +237,9 @@ border:0;
 
 @media(prefers-reduced-motion:reduce){
 *,*::before,*::after{
-animation-duration:0.01ms !important;
-animation-iteration-count:1 !important;
+animation:none !important;
 scroll-behavior:auto !important;
-transition-duration:0.01ms !important;
+transition:none !important;
 }
 }
 
@@ -257,17 +282,17 @@ font-size:32px;
 
 <div class="logo">JOJO</div>
 
-<div class="hamburguer" onclick="menu()">☰</div>
+<button class="hamburguer" type="button" aria-label="Abrir menu" aria-controls="menu" aria-expanded="false" onclick="menu()">☰</button>
 
 <div class="menu" id="menu">
-<a href="#">Início</a>
+<a href="#inicio">Início</a>
 <a href="#galeria">Personagens</a>
-<a href="#">Stands</a>
+<a href="#stands">Stands</a>
 </div>
 
 </nav>
 
-<section class="hero">
+<section class="hero" id="inicio">
 
 <h1>JoJo's Bizarre Adventure</h1>
 
@@ -291,31 +316,36 @@ font-size:32px;
 
 <div class="grid" id="gradePersonagens">
 
-<div class="card" onclick="personagem('ORA ORA ORA')">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTQvTL2UjHyvXHLM3yEjxPDY6UB3aLBMZZPukTyj6BBw&s=10">
+<button class="card" type="button" aria-label="Ativar Stand de Jotaro Kujo" onclick="personagem('ORA ORA ORA')">
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTQvTL2UjHyvXHLM3yEjxPDY6UB3aLBMZZPukTyj6BBw&s=10" alt="Retrato de Jotaro Kujo" loading="lazy" decoding="async" width="400" height="250">
 <h3>Jotaro Kujo</h3>
-</div>
+</button>
 
-<div class="card" onclick="personagem('ZA WARUDO')">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwNdPWTEAxIudRE6K4aXVIlc3O8B_Ak7FQn5d4u5PY1YwZxKUpbqMGn-A&s=10">
+<button class="card" type="button" aria-label="Ativar Stand de Dio Brando" onclick="personagem('ZA WARUDO')">
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwNdPWTEAxIudRE6K4aXVIlc3O8B_Ak7FQn5d4u5PY1YwZxKUpbqMGn-A&s=10" alt="Retrato de Dio Brando" loading="lazy" decoding="async" width="400" height="250">
 <h3>Dio Brando</h3>
-</div>
+</button>
 
-<div class="card" onclick="personagem('MUDA MUDA')">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbsReXi2wnbjbK0H8n4_mS9AHW6HJJC8xmS4A4yPmuAg&s=10">
+<button class="card" type="button" aria-label="Ativar Stand de Giorno Giovanna" onclick="personagem('MUDA MUDA')">
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbsReXi2wnbjbK0H8n4_mS9AHW6HJJC8xmS4A4yPmuAg&s=10" alt="Retrato de Giorno Giovanna" loading="lazy" decoding="async" width="400" height="250">
 <h3>Giorno Giovanna</h3>
-</div>
+</button>
 
-<div class="card" onclick="personagem('DORA DORA')">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdjs0ziQheNAhfitjZYwgMwuLyCXQEHJJMeFVrJF18oA&s=10">
+<button class="card" type="button" aria-label="Ativar Stand de Josuke Higashikata" onclick="personagem('DORA DORA')">
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdjs0ziQheNAhfitjZYwgMwuLyCXQEHJJMeFVrJF18oA&s=10" alt="Retrato de Josuke Higashikata" loading="lazy" decoding="async" width="400" height="250">
 <h3>Josuke Higashikata</h3>
-</div>
+</button>
 
 </div>
 
 </section>
 
-<div id="standEffect"></div>
+<section class="stands" id="stands" aria-labelledby="tituloStands">
+<h2 id="tituloStands">Stands</h2>
+<p>Escolha um personagem na galeria para liberar seu Stand.</p>
+</section>
+
+<div id="standEffect" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <footer>
 Site criado por um desocupado 😉
@@ -337,6 +367,7 @@ allow="autoplay">
 <script>
 
 let tocando=false
+const prefereMovimentoReduzido=window.matchMedia("(prefers-reduced-motion: reduce)")
 
 function musica(){
 
@@ -390,6 +421,10 @@ efeito.style.opacity="0"
 
 function particles(){
 
+if(prefereMovimentoReduzido.matches) return
+
+document.querySelectorAll(".particle").forEach(function(p){p.remove()})
+
 for(let i=0;i<30;i++){
 
 let p=document.createElement("div")
@@ -408,15 +443,50 @@ setTimeout(()=>p.remove(),1000)
 
 }
 
-function menu(){
+function atualizarMenu(aberto){
 
 let m=document.getElementById("menu")
 let botao=document.querySelector(".hamburguer")
 
-m.classList.toggle("active")
-botao.setAttribute("aria-expanded",m.classList.contains("active") ? "true" : "false")
+m.classList.toggle("active",aberto)
+botao.setAttribute("aria-expanded",aberto ? "true" : "false")
+botao.setAttribute("aria-label",aberto ? "Fechar menu" : "Abrir menu")
 
 }
+
+function menu(){
+
+let m=document.getElementById("menu")
+let aberto=!m.classList.contains("active")
+
+atualizarMenu(aberto)
+
+if(aberto) m.querySelector("a").focus()
+
+}
+
+function fecharMenu(){
+
+let m=document.getElementById("menu")
+
+if(!m.classList.contains("active")) return
+
+atualizarMenu(false)
+
+}
+
+document.querySelectorAll("#menu a").forEach(function(link){
+link.addEventListener("click",fecharMenu)
+})
+
+document.addEventListener("keydown",function(event){
+
+if(event.key==="Escape" && document.getElementById("menu").classList.contains("active")){
+fecharMenu()
+document.querySelector(".hamburguer").focus()
+}
+
+})
 
 const buscaPersonagem=document.getElementById("buscaPersonagem")
 const cardsPersonagens=Array.from(document.querySelectorAll("#gradePersonagens .card"))
