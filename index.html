@@ -168,6 +168,97 @@ object-fit:cover;
 padding:10px;
 }
 
+/* ADICIONAR PERSONAGEM */
+
+.acoes-galeria{
+display:flex;
+justify-content:center;
+margin-top:22px;
+}
+
+.botao-adicionar{
+border:2px solid #ffea00;
+border-radius:10px;
+padding:12px 20px;
+background:#ffea00;
+color:#171717;
+font-size:16px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.botao-adicionar:hover{background:#fff;color:#171717;}
+
+.botao-adicionar:focus-visible,
+.formulario-personagem button:focus-visible,
+.formulario-personagem input:focus-visible,
+.fechar-formulario:focus-visible{
+outline:3px solid #fff;
+outline-offset:4px;
+}
+
+.painel-formulario{
+width:min(100% - 32px,520px);
+margin:24px auto 0;
+padding:24px;
+border:1px solid rgba(255,255,255,.35);
+border-radius:16px;
+background:#171020;
+text-align:left;
+}
+
+.painel-formulario[hidden]{display:none;}
+
+.formulario-personagem{
+display:grid;
+gap:14px;
+}
+
+.formulario-personagem label{font-weight:bold;}
+
+.formulario-personagem input[type="text"],
+.formulario-personagem input[type="file"]{
+width:100%;
+padding:11px;
+border:1px solid #aaa;
+border-radius:8px;
+background:#fff;
+color:#171717;
+font:inherit;
+}
+
+.preview-personagem{
+display:block;
+width:140px;
+height:140px;
+object-fit:cover;
+border-radius:12px;
+background:#333;
+}
+
+.preview-personagem[hidden]{display:none;}
+
+.acoes-formulario{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.acoes-formulario button,
+.fechar-formulario{
+border:0;
+border-radius:8px;
+padding:11px 16px;
+font:inherit;
+font-weight:bold;
+cursor:pointer;
+}
+
+.salvar-personagem{background:#ffea00;color:#171717;}
+.cancelar-personagem,.fechar-formulario{background:#444;color:#fff;}
+
+.mensagem-formulario{min-height:1.4em;color:#ffea00;}
+
 /* STAND */
 
 #standEffect{
@@ -313,6 +404,34 @@ font-size:32px;
 <label for="buscaPersonagem" class="sr-only">Buscar personagem</label>
 <input id="buscaPersonagem" type="search" placeholder="Buscar personagem..." autocomplete="off" aria-describedby="resultadoBusca" style="margin-top:20px;padding:12px 16px;width:min(100%,420px);border:2px solid #ff00ff;border-radius:10px;font-size:16px;">
 <p id="resultadoBusca" role="status" aria-live="polite" style="margin-top:12px;">4 personagens encontrados</p>
+
+<div class="acoes-galeria">
+<button class="botao-adicionar" id="abrirFormularioPersonagem" type="button" aria-expanded="false" aria-controls="painelFormularioPersonagem">+ Adicionar personagem</button>
+</div>
+
+<section class="painel-formulario" id="painelFormularioPersonagem" aria-labelledby="tituloFormularioPersonagem" hidden>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
+<h3 id="tituloFormularioPersonagem">Novo personagem</h3>
+<button class="fechar-formulario" id="fecharFormularioPersonagem" type="button" aria-label="Fechar formulário">Fechar</button>
+</div>
+<form class="formulario-personagem" id="formularioPersonagem">
+<div>
+<label for="nomeNovoPersonagem">Nome do personagem</label>
+<input id="nomeNovoPersonagem" name="nome" type="text" maxlength="60" required autocomplete="off" placeholder="Ex.: Joseph Joestar">
+</div>
+<div>
+<label for="imagemNovoPersonagem">Imagem do personagem</label>
+<input id="imagemNovoPersonagem" name="imagem" type="file" accept="image/png,image/jpeg,image/webp,image/gif" required aria-describedby="ajudaImagemPersonagem">
+<small id="ajudaImagemPersonagem">Escolha PNG, JPG, WEBP ou GIF. Tamanho máximo: 3 MB.</small>
+</div>
+<img class="preview-personagem" id="previewNovoPersonagem" alt="Pré-visualização da imagem escolhida" hidden>
+<p class="mensagem-formulario" id="mensagemFormularioPersonagem" role="status" aria-live="polite"></p>
+<div class="acoes-formulario">
+<button class="salvar-personagem" id="salvarNovoPersonagem" type="submit">Adicionar à galeria</button>
+<button class="cancelar-personagem" id="cancelarNovoPersonagem" type="button">Cancelar</button>
+</div>
+</form>
+</section>
 
 <div class="grid" id="gradePersonagens">
 
@@ -488,25 +607,183 @@ document.querySelector(".hamburguer").focus()
 
 })
 
-const buscaPersonagem=document.getElementById("buscaPersonagem")
-const cardsPersonagens=Array.from(document.querySelectorAll("#gradePersonagens .card"))
-const resultadoBusca=document.getElementById("resultadoBusca")
+// PERSONAGENS PERSONALIZADOS: armazenados localmente no navegador (IndexedDB).
+const abrirFormularioPersonagem=document.getElementById("abrirFormularioPersonagem")
+const painelFormularioPersonagem=document.getElementById("painelFormularioPersonagem")
+const formularioPersonagem=document.getElementById("formularioPersonagem")
+const nomeNovoPersonagem=document.getElementById("nomeNovoPersonagem")
+const imagemNovoPersonagem=document.getElementById("imagemNovoPersonagem")
+const previewNovoPersonagem=document.getElementById("previewNovoPersonagem")
+const mensagemFormularioPersonagem=document.getElementById("mensagemFormularioPersonagem")
+const gradePersonagens=document.getElementById("gradePersonagens")
+const limiteImagemPersonagem=3*1024*1024
+let urlPreviewPersonagem=null
+let bancoPersonagens=null
 
-buscaPersonagem.addEventListener("input",function(){
+function abrirBancoPersonagens(){
+return new Promise(function(resolve,reject){
+const requisicao=indexedDB.open("jojos-personagens",1)
+requisicao.onupgradeneeded=function(){
+const banco=requisicao.result
+if(!banco.objectStoreNames.contains("personagens")){
+banco.createObjectStore("personagens",{keyPath:"id",autoIncrement:true})
+}
+}
+requisicao.onsuccess=function(){resolve(requisicao.result)}
+requisicao.onerror=function(){reject(requisicao.error)}
+})
+}
+
+function acessarPersonagens(modo,operacao){
+return new Promise(function(resolve,reject){
+const transacao=bancoPersonagens.transaction("personagens",modo)
+const requisicao=operacao(transacao.objectStore("personagens"))
+requisicao.onsuccess=function(){resolve(requisicao.result)}
+requisicao.onerror=function(){reject(requisicao.error)}
+})
+}
+
+function criarCardPersonagem(personagemSalvo){
+const card=document.createElement("button")
+card.className="card"
+card.type="button"
+card.setAttribute("aria-label","Exibir personagem "+personagemSalvo.nome)
+card.addEventListener("click",function(){personagem(personagemSalvo.nome)})
+
+const imagem=document.createElement("img")
+const urlImagem=URL.createObjectURL(personagemSalvo.imagem)
+imagem.src=urlImagem
+imagem.alt="Retrato de "+personagemSalvo.nome
+imagem.loading="lazy"
+imagem.decoding="async"
+imagem.width=400
+imagem.height=250
+imagem.addEventListener("load",function(){URL.revokeObjectURL(urlImagem)},{once:true})
+
+const titulo=document.createElement("h3")
+titulo.textContent=personagemSalvo.nome
+
+card.append(imagem,titulo)
+gradePersonagens.appendChild(card)
+return card
+}
+
+async function carregarPersonagensSalvos(){
+try{
+bancoPersonagens=await abrirBancoPersonagens()
+const salvos=await acessarPersonagens("readonly",function(store){return store.getAll()})
+salvos.forEach(criarCardPersonagem)
+atualizarResultadoBusca()
+}catch(erro){
+console.error("Não foi possível carregar os personagens salvos:",erro)
+mensagemFormularioPersonagem.textContent="O armazenamento local não está disponível neste navegador."
+}
+}
+
+function atualizarResultadoBusca(){
 const termo=buscaPersonagem.value.trim().toLocaleLowerCase("pt-BR")
+const todosCards=Array.from(gradePersonagens.querySelectorAll(".card"))
 let visiveis=0
-
-cardsPersonagens.forEach(function(card){
+todosCards.forEach(function(card){
 const nome=card.querySelector("h3").textContent.toLocaleLowerCase("pt-BR")
 const corresponde=nome.includes(termo)
 card.hidden=!corresponde
 if(corresponde) visiveis++
 })
-
 resultadoBusca.textContent=visiveis===1 ? "1 personagem encontrado" : visiveis+" personagens encontrados"
 if(visiveis===0) resultadoBusca.textContent="Nenhum personagem encontrado. Tente outro nome."
+}
 
+function limparPreviewPersonagem(){
+if(urlPreviewPersonagem){
+URL.revokeObjectURL(urlPreviewPersonagem)
+urlPreviewPersonagem=null
+}
+previewNovoPersonagem.removeAttribute("src")
+previewNovoPersonagem.hidden=true
+}
+
+function fecharFormularioNovoPersonagem(){
+painelFormularioPersonagem.hidden=true
+abrirFormularioPersonagem.setAttribute("aria-expanded","false")
+abrirFormularioPersonagem.focus()
+}
+
+abrirFormularioPersonagem.addEventListener("click",function(){
+painelFormularioPersonagem.hidden=false
+abrirFormularioPersonagem.setAttribute("aria-expanded","true")
+nomeNovoPersonagem.focus()
 })
+
+document.getElementById("fecharFormularioPersonagem").addEventListener("click",fecharFormularioNovoPersonagem)
+document.getElementById("cancelarNovoPersonagem").addEventListener("click",fecharFormularioNovoPersonagem)
+
+imagemNovoPersonagem.addEventListener("change",function(){
+limparPreviewPersonagem()
+const arquivo=imagemNovoPersonagem.files[0]
+if(!arquivo) return
+if(!["image/jpeg","image/png","image/webp","image/gif"].includes(arquivo.type) || arquivo.size>limiteImagemPersonagem){
+imagemNovoPersonagem.value=""
+mensagemFormularioPersonagem.textContent="Arquivo inválido. Use PNG, JPG, WEBP ou GIF de até 3 MB."
+return
+}
+urlPreviewPersonagem=URL.createObjectURL(arquivo)
+previewNovoPersonagem.src=urlPreviewPersonagem
+previewNovoPersonagem.hidden=false
+mensagemFormularioPersonagem.textContent=""
+})
+
+formularioPersonagem.addEventListener("submit",async function(event){
+event.preventDefault()
+const nome=nomeNovoPersonagem.value.trim()
+const imagem=imagemNovoPersonagem.files[0]
+if(!nome || !imagem){
+mensagemFormularioPersonagem.textContent="Preencha o nome e selecione uma imagem."
+return
+}
+if(imagem.size>limiteImagemPersonagem || !["image/jpeg","image/png","image/webp","image/gif"].includes(imagem.type)){
+mensagemFormularioPersonagem.textContent="A imagem precisa ser PNG, JPG, WEBP ou GIF de até 3 MB."
+return
+}
+const botaoSalvar=document.getElementById("salvarNovoPersonagem")
+botaoSalvar.disabled=true
+mensagemFormularioPersonagem.textContent="Salvando personagem..."
+try{
+const salvo=await acessarPersonagens("readwrite",function(store){
+return store.add({nome:nome,imagem:imagem,criadoEm:new Date().toISOString()})
+})
+const personagemSalvo={id:salvo,nome:nome,imagem:imagem}
+const card=criarCardPersonagem(personagemSalvo)
+buscaPersonagem.value=""
+atualizarResultadoBusca()
+card.scrollIntoView({behavior:prefereMovimentoReduzido.matches ? "auto" : "smooth",block:"nearest"})
+formularioPersonagem.reset()
+limparPreviewPersonagem()
+mensagemFormularioPersonagem.textContent="Personagem adicionado à galeria."
+fecharFormularioNovoPersonagem()
+}catch(erro){
+console.error("Não foi possível salvar o personagem:",erro)
+mensagemFormularioPersonagem.textContent="Não foi possível salvar. Verifique o espaço disponível no navegador."
+}finally{
+botaoSalvar.disabled=false
+}
+})
+
+document.addEventListener("keydown",function(event){
+if(event.key==="Escape" && !painelFormularioPersonagem.hidden){
+fecharFormularioNovoPersonagem()
+}
+})
+
+window.addEventListener("beforeunload",limparPreviewPersonagem)
+
+const buscaPersonagem=document.getElementById("buscaPersonagem")
+const cardsPersonagens=Array.from(document.querySelectorAll("#gradePersonagens .card"))
+const resultadoBusca=document.getElementById("resultadoBusca")
+
+buscaPersonagem.addEventListener("input",atualizarResultadoBusca)
+
+carregarPersonagensSalvos()
 
 </script>
 
