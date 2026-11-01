@@ -526,46 +526,196 @@ cursor:pointer;
 
 .mensagem-formulario{min-height:1.4em;color:var(--color-yellow);}
 
-/* STAND */
+/* STAND — revelação tipográfica e identidade visual por personagem */
 
 #standEffect{
+--stand-color:var(--color-yellow);
+--stand-glow:var(--overlay-yellow-50);
 position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-pointer-events:none;
-font-size:80px;
+inset:0;
+z-index:1200;
 display:flex;
 align-items:center;
 justify-content:center;
-opacity:0;
-color:var(--color-yellow);
-text-shadow:0 0 40px var(--color-magenta);
-transition:.5s;
-}
-
-/* PARTICULAS */
-
-.particle{
-position:fixed;
-width:10px;
-height:10px;
-background:var(--color-white);
-border-radius:50%;
+padding:24px;
+overflow:hidden;
 pointer-events:none;
-animation:particle 1s linear;
+visibility:hidden;
+opacity:0;
+color:var(--stand-color);
+background:radial-gradient(ellipse at center,var(--stand-glow),transparent 68%);
+text-align:center;
+transition:opacity .22s ease,visibility .22s ease;
 }
 
-@keyframes particle{
-0%{
-transform:translateY(0);
+#standEffect.is-active{
+visibility:visible;
 opacity:1;
 }
-100%{
-transform:translateY(-200px);
-opacity:0;
+
+.stand-phrase{
+position:relative;
+z-index:2;
+max-width:100%;
+font-size:clamp(2.2rem,9vw,6.5rem);
+font-weight:900;
+line-height:1.12;
+letter-spacing:.045em;
+overflow-wrap:anywhere;
+text-transform:uppercase;
+-webkit-text-stroke:1px var(--stand-color);
+color:var(--color-white);
+text-shadow:0 0 8px var(--stand-color),0 0 24px var(--stand-color),0 0 54px var(--stand-glow);
 }
+
+.stand-letter{
+display:inline-block;
+opacity:0;
+transform:translateY(-1.15em) rotateX(85deg) scale(.7);
+transform-origin:top center;
+animation:standLetterDrop .52s cubic-bezier(.16,.8,.25,1) forwards;
+animation-delay:var(--letter-delay,0ms);
+}
+
+@keyframes standLetterDrop{
+0%{opacity:0;transform:translateY(-1.15em) rotateX(85deg) scale(.7);filter:blur(8px);}
+65%{opacity:1;transform:translateY(5px) rotateX(-8deg) scale(1.08);filter:blur(0);}
+100%{opacity:1;transform:translateY(0) rotateX(0) scale(1);}
+}
+
+#standEffect::before,
+#standEffect::after{
+content:"";
+position:absolute;
+inset:12%;
+border:2px solid var(--stand-color);
+border-radius:50%;
+opacity:0;
+pointer-events:none;
+}
+
+#standEffect.fx-jotaro::before{
+animation:impactRing .9s ease-out both;
+}
+#standEffect.fx-jotaro::after{
+inset:22%;
+border-style:dashed;
+animation:impactRing .9s .12s ease-out both;
+}
+
+#standEffect.fx-dio::before{
+inset:8%;
+border-radius:0;
+border-width:1px;
+transform:rotate(45deg) scale(.2);
+animation:timeFrame 1.35s ease-out both;
+}
+#standEffect.fx-dio::after{
+inset:18%;
+border-radius:0;
+border-style:dashed;
+transform:rotate(-45deg) scale(.2);
+animation:timeFrame 1.35s .1s ease-out both;
+}
+
+#standEffect.fx-giorno::before{
+inset:15%;
+border-width:1px;
+border-radius:42% 58% 62% 38%;
+animation:lifeBloom 1.4s ease-out both;
+}
+#standEffect.fx-giorno::after{
+inset:25%;
+border-width:1px;
+border-radius:58% 42% 38% 62%;
+animation:lifeBloom 1.4s .16s ease-out both;
+}
+
+#standEffect.fx-josuke::before{
+inset:10% 25%;
+border-radius:12px;
+border-style:dashed;
+transform:rotate(0);
+animation:repairPulse .8s ease-in-out both;
+}
+#standEffect.fx-josuke::after{
+inset:25% 10%;
+border-radius:12px;
+border-style:dashed;
+animation:repairPulse .8s .12s ease-in-out both;
+}
+
+@keyframes impactRing{
+0%{opacity:0;transform:scale(.25);}
+35%{opacity:.9;}
+100%{opacity:0;transform:scale(1.35);}
+}
+@keyframes timeFrame{
+0%{opacity:0;transform:rotate(45deg) scale(.15);}
+45%{opacity:.9;}
+100%{opacity:0;transform:rotate(135deg) scale(1.15);}
+}
+@keyframes lifeBloom{
+0%{opacity:0;transform:scale(.2) rotate(-35deg);}
+45%{opacity:.8;}
+100%{opacity:0;transform:scale(1.2) rotate(35deg);}
+}
+@keyframes repairPulse{
+0%{opacity:0;transform:scale(.65) rotate(0);}
+35%{opacity:1;}
+100%{opacity:0;transform:scale(1.1) rotate(12deg);}
+}
+
+/* Partículas específicas: impacto, fragmentos, pétalas e faíscas */
+
+.stand-particle{
+position:absolute;
+z-index:1;
+left:var(--particle-x);
+top:var(--particle-y);
+width:var(--particle-size);
+height:var(--particle-size);
+background:var(--stand-color);
+box-shadow:0 0 12px var(--stand-color);
+opacity:0;
+animation:standParticle var(--particle-duration,1s) ease-out var(--particle-delay,0ms) both;
+}
+
+.fx-jotaro .stand-particle{
+width:3px;
+height:var(--particle-size);
+border-radius:2px;
+transform:rotate(var(--particle-angle));
+}
+.fx-dio .stand-particle{
+clip-path:polygon(50% 0,100% 35%,70% 100%,0 65%);
+transform:rotate(var(--particle-angle));
+}
+.fx-giorno .stand-particle{
+border-radius:100% 0 100% 0;
+transform:rotate(var(--particle-angle));
+}
+.fx-josuke .stand-particle{
+width:var(--particle-size);
+height:3px;
+border-radius:2px;
+box-shadow:0 0 10px var(--stand-color),0 0 10px var(--stand-color);
+transform:rotate(var(--particle-angle));
+}
+.fx-custom .stand-particle{
+border-radius:50%;
+clip-path:polygon(50% 0,62% 36%,100% 50%,62% 64%,50% 100%,38% 64%,0 50%,38% 36%);
+}
+
+@keyframes standParticle{
+0%{opacity:0;transform:translate3d(0,0,0) rotate(var(--particle-angle)) scale(.35);}
+18%{opacity:1;}
+100%{opacity:0;transform:translate3d(var(--particle-drift),var(--particle-rise),0) rotate(calc(var(--particle-angle) + 150deg)) scale(1.1);}
+}
+
+@media(prefers-reduced-motion:reduce){
+.stand-letter{opacity:1;transform:none;animation:none;}
+#standEffect::before,#standEffect::after,.stand-particle{animation:none !important;display:none;}
 }
 
 /* FOOTER */
@@ -761,60 +911,75 @@ tocando=false
 
 }
 
+let temporizadorStand=null
+const estilosStand={
+"base-jotaro":{classe:"fx-jotaro",cor:"#48d9ff",brilho:"rgba(72,217,255,.28)",particulas:24},
+"base-dio":{classe:"fx-dio",cor:"#c58aff",brilho:"rgba(197,138,255,.3)",particulas:30},
+"base-giorno":{classe:"fx-giorno",cor:"#ffd447",brilho:"rgba(255,212,71,.3)",particulas:26},
+"base-josuke":{classe:"fx-josuke",cor:"#ff79bd",brilho:"rgba(255,121,189,.28)",particulas:22},
+"custom":{classe:"fx-custom",cor:"#7fffd4",brilho:"rgba(127,255,212,.25)",particulas:20}
+}
+
 function stand(){
-
-let efeito=document.getElementById("standEffect")
-
-efeito.innerText="ZA WARUDO"
-
-efeito.style.opacity="1"
-
-particles()
-
-setTimeout(()=>{
-efeito.style.opacity="0"
-},1500)
-
+personagem({nome:"Dio Brando",stand:"ZA WARUDO",chave:"base-dio"})
 }
 
-function personagem(texto){
+function personagem(registro){
+const efeito=document.getElementById("standEffect")
+const estilo=estilosStand[registro.chave] || estilosStand.custom
+const frase=String(registro.stand || registro.nome || "STAND").trim()
+if(!frase) return
 
-let efeito=document.getElementById("standEffect")
+if(temporizadorStand) clearTimeout(temporizadorStand)
+efeito.className=""
+efeito.replaceChildren()
+efeito.style.setProperty("--stand-color",estilo.cor)
+efeito.style.setProperty("--stand-glow",estilo.brilho)
+efeito.classList.add(estilo.classe)
 
-efeito.innerText=texto
+const texto=document.createElement("span")
+texto.className="stand-phrase"
+texto.setAttribute("aria-hidden","true")
 
-efeito.style.opacity="1"
+Array.from(frase).forEach(function(letra,indice){
+const caractere=document.createElement("span")
+caractere.className="stand-letter"
+caractere.textContent=letra===" " ? "\u00a0" : letra
+caractere.style.setProperty("--letter-delay",(indice*48)+"ms")
+texto.appendChild(caractere)
+})
+efeito.appendChild(texto)
+efeito.setAttribute("aria-label",frase)
+efeito.classList.add("is-active")
 
-particles()
+criarParticulasStand(efeito,estilo)
 
-setTimeout(()=>{
-efeito.style.opacity="0"
-},1500)
-
+const duracao=Math.max(1900,frase.length*48+1250)
+temporizadorStand=setTimeout(function(){
+efeito.classList.remove("is-active")
+temporizadorStand=setTimeout(function(){
+efeito.replaceChildren()
+efeito.className=""
+},260)
+},duracao)
 }
 
-function particles(){
-
+function criarParticulasStand(efeito,estilo){
 if(prefereMovimentoReduzido.matches) return
-
-document.querySelectorAll(".particle").forEach(function(p){p.remove()})
-
-for(let i=0;i<30;i++){
-
-let p=document.createElement("div")
-
-p.className="particle"
-
-p.style.left=Math.random()*100+"%"
-
-p.style.top=Math.random()*100+"%"
-
-document.body.appendChild(p)
-
-setTimeout(()=>p.remove(),1000)
-
+for(let i=0;i<estilo.particulas;i++){
+const particula=document.createElement("span")
+particula.className="stand-particle"
+particula.style.setProperty("--particle-x",Math.random()*100+"%")
+particula.style.setProperty("--particle-y",(25+Math.random()*60)+"%")
+particula.style.setProperty("--particle-size",(5+Math.random()*15)+"px")
+particula.style.setProperty("--particle-angle",Math.round(Math.random()*360)+"deg")
+particula.style.setProperty("--particle-drift",(Math.random()*180-90)+"px")
+particula.style.setProperty("--particle-rise",(-70-Math.random()*190)+"px")
+particula.style.setProperty("--particle-delay",Math.round(Math.random()*220)+"ms")
+particula.style.setProperty("--particle-duration",(850+Math.random()*650)+"ms")
+efeito.appendChild(particula)
+particula.addEventListener("animationend",function(){particula.remove()},{once:true})
 }
-
 }
 
 function atualizarMenu(aberto){
@@ -958,7 +1123,7 @@ const botaoStand=document.createElement("button")
 botaoStand.type="button"
 botaoStand.className="card-stand-externo"
 botaoStand.textContent="Ativar Stand de "+registro.nome
-botaoStand.addEventListener("click",function(){personagem(registro.stand || registro.nome)})
+botaoStand.addEventListener("click",function(){personagem(registro)})
 const botaoExcluir=document.createElement("button")
 botaoExcluir.type="button"
 botaoExcluir.className="card-excluir"
