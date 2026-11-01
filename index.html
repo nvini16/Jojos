@@ -124,6 +124,23 @@ transition:.3s;
 color:var(--color-yellow);
 }
 
+.menu a[aria-current="location"]{
+color:var(--color-yellow);
+text-shadow:0 0 10px var(--overlay-yellow-50);
+}
+
+/* Entrada suave das seções */
+.reveal-pending{
+opacity:0;
+transform:translateY(28px);
+transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1);
+}
+
+.reveal-pending.is-visible{
+opacity:1;
+transform:translateY(0);
+}
+
 /* MENU MOBILE */
 
 .hamburguer{
@@ -767,6 +784,13 @@ transition:none !important;
 }
 }
 
+@media(prefers-reduced-motion:reduce){
+.reveal-pending{
+opacity:1;
+transform:none;
+}
+}
+
 /* MOBILE */
 
 @media(max-width:700px){
@@ -1033,6 +1057,49 @@ atualizarMenu(false)
 document.querySelectorAll("#menu a").forEach(function(link){
 link.addEventListener("click",fecharMenu)
 })
+
+
+// Navegação ativa e entrada progressiva das seções.
+const secoesNavegacao=Array.from(document.querySelectorAll("#inicio,#galeria,#stands"))
+const linksNavegacao=Array.from(document.querySelectorAll("#menu a"))
+
+function marcarSecaoAtiva(id){
+linksNavegacao.forEach(function(link){
+if(link.getAttribute("href")==="#"+id){
+link.setAttribute("aria-current","location")
+}else{
+link.removeAttribute("aria-current")
+}
+})
+}
+
+if("IntersectionObserver" in window){
+const observadorNavegacao=new IntersectionObserver(function(entradas){
+entradas.forEach(function(entrada){
+if(entrada.isIntersecting) marcarSecaoAtiva(entrada.target.id)
+})
+},{rootMargin:"-20% 0px -65% 0px",threshold:0})
+secoesNavegacao.forEach(function(secao){observadorNavegacao.observe(secao)})
+
+if(!prefereMovimentoReduzido.matches){
+const observadorEntrada=new IntersectionObserver(function(entradas,observador){
+entradas.forEach(function(entrada){
+if(entrada.isIntersecting){
+entrada.target.classList.add("is-visible")
+observador.unobserve(entrada.target)
+}
+})
+},{threshold:.12})
+secoesNavegacao.forEach(function(secao){
+secao.classList.add("reveal-pending")
+observadorEntrada.observe(secao)
+})
+}else{
+secoesNavegacao.forEach(function(secao){secao.classList.add("is-visible")})
+}
+}else{
+secoesNavegacao.forEach(function(secao){secao.classList.add("is-visible")})
+}
 
 document.addEventListener("keydown",function(event){
 
