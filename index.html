@@ -757,6 +757,7 @@ frente.append(imagem,titulo)
 const verso=document.createElement("div")
 verso.className="card-face card-verso"
 verso.setAttribute("aria-label","Opções para "+registro.nome)
+verso.inert=true
 
 const tituloVerso=document.createElement("h3")
 tituloVerso.textContent=registro.nome
@@ -785,6 +786,8 @@ const estavaVirado=cena.classList.contains("virado")
 document.querySelectorAll(".card-scene.virado").forEach(function(card){card.classList.remove("virado")})
 if(!estavaVirado){
 cena.classList.add("virado")
+frente.inert=true
+verso.inert=false
 botaoEditar.focus()
 }
 })
@@ -794,7 +797,7 @@ return cena
 async function renderizarPersonagens(){
 const registros=await acessarPersonagens("readonly",function(store){return store.getAll()})
 gradePersonagens.replaceChildren()
-registros.forEach(function(registro){gradePersonagens.appendChild(criarCardPersonagem(registro))})
+registros.filter(function(registro){return !registro.excluido}).forEach(function(registro){gradePersonagens.appendChild(criarCardPersonagem(registro))})
 atualizarResultadoBusca()
 }
 
@@ -889,7 +892,9 @@ console.error("Não foi possível abrir a edição:",erro)
 async function excluirPersonagem(id,nome){
 if(!window.confirm('Excluir "'+nome+'" da galeria? Essa ação não pode ser desfeita.')) return
 try{
-await acessarPersonagens("readwrite",function(store){return store.delete(id)})
+const registro=await acessarPersonagens("readonly",function(store){return store.get(id)})
+if(registro && registro.chave){registro.excluido=true;await acessarPersonagens("readwrite",function(store){return store.put(registro)})}
+else{await acessarPersonagens("readwrite",function(store){return store.delete(id)})}
 await renderizarPersonagens()
 }catch(erro){
 console.error("Não foi possível excluir o personagem:",erro)
@@ -974,6 +979,8 @@ fecharFormularioNovoPersonagem()
 const virado=document.querySelector(".card-scene.virado")
 if(virado){
 virado.classList.remove("virado")
+virado.querySelector(".card-verso").inert=true
+virado.querySelector(".card-frente").inert=false
 virado.querySelector(".card-frente").focus()
 }
 }
