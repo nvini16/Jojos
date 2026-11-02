@@ -257,10 +257,42 @@ padding:10px;
 /* CARTÕES COM VIRADA E AÇÕES */
 
 .card-scene{
+position:relative;
 display:flex;
 flex-direction:column;
 perspective:1000px;
 min-height:360px;
+}
+
+.card-favorito{
+position:absolute;
+top:12px;
+right:12px;
+z-index:6;
+display:grid;
+place-items:center;
+width:44px;
+height:44px;
+border:1px solid var(--overlay-white-35);
+border-radius:50%;
+background:var(--overlay-black-35);
+color:var(--color-white);
+font-size:1.7rem;
+line-height:1;
+backdrop-filter:blur(8px);
+cursor:pointer;
+transition:transform .2s,background .2s,color .2s,border-color .2s;
+}
+
+.card-favorito:hover{transform:scale(1.08);}
+.card-favorito.is-favorito{
+background:var(--color-yellow);
+color:var(--color-text-dark);
+border-color:var(--color-yellow);
+}
+.card-favorito:focus-visible{
+outline:3px solid var(--color-yellow);
+outline-offset:3px;
 }
 
 .card-stand-externo{
@@ -360,6 +392,36 @@ outline-offset:-5px;
 }
 
 .card[hidden],.card-scene[hidden]{display:none;}
+
+.filtros-galeria{
+display:flex;
+justify-content:center;
+margin-top:14px;
+}
+
+.botao-filtro-favoritos{
+padding:9px 15px;
+border:1px solid var(--overlay-yellow-50);
+border-radius:999px;
+background:var(--overlay-black-25);
+color:var(--color-white);
+font:inherit;
+font-weight:bold;
+cursor:pointer;
+transition:background .2s,color .2s,border-color .2s;
+}
+
+.botao-filtro-favoritos:hover,
+.botao-filtro-favoritos.ativo{
+background:var(--color-yellow);
+border-color:var(--color-yellow);
+color:var(--color-text-dark);
+}
+
+.botao-filtro-favoritos:focus-visible{
+outline:3px solid var(--color-white);
+outline-offset:3px;
+}
 
 @media(prefers-reduced-motion:reduce){
 .card-flipper{transition:none;}
@@ -861,6 +923,9 @@ font-size:32px;
 <label for="buscaPersonagem" class="sr-only">Buscar personagem</label>
 <input id="buscaPersonagem" type="search" placeholder="Buscar personagem..." autocomplete="off" aria-describedby="resultadoBusca" class="busca-personagem">
 <p id="resultadoBusca" role="status" aria-live="polite" style="margin-top:12px;">4 personagens encontrados</p>
+<div class="filtros-galeria">
+<button class="botao-filtro-favoritos" id="alternarFiltroFavoritos" type="button" aria-pressed="false">☆ Mostrar favoritos</button>
+</div>
 
 <div class="acoes-galeria">
 <button class="botao-adicionar" id="abrirFormularioPersonagem" type="button" aria-expanded="false" aria-controls="painelFormularioPersonagem">+ Adicionar personagem</button>
@@ -1131,6 +1196,9 @@ const personagensIniciais=[
 let urlPreviewPersonagem=null
 let bancoPersonagens=null
 let idPersonagemEditando=null
+let favoritosPersonagens=new Set()
+let somenteFavoritos=false
+const chaveArmazenamentoFavoritos="jojos-favoritos-v1"
 
 function abrirBancoPersonagens(){
 return new Promise(function(resolve,reject){
@@ -1161,10 +1229,53 @@ if(registro.imagem instanceof Blob) return URL.createObjectURL(registro.imagem)
 return registro.imagemUrl || ""
 }
 
+function chaveFavorito(registro){
+return registro.chave || "custom:"+registro.id
+}
+
+function carregarFavoritos(){
+try{
+const salvos=JSON.parse(localStorage.getItem(chaveArmazenamentoFavoritos) || "[]")
+if(Array.isArray(salvos)){
+favoritosPersonagens=new Set(salvos.filter(function(chave){return typeof chave==="string" && chave.length<=100}))
+}
+}catch(erro){
+console.warn("Não foi possível carregar os favoritos salvos:",erro)
+favoritosPersonagens=new Set()
+}
+}
+
+function salvarFavoritos(){
+try{
+localStorage.setItem(chaveArmazenamentoFavoritos,JSON.stringify(Array.from(favoritosPersonagens)))
+}catch(erro){
+console.warn("Não foi possível persistir os favoritos neste navegador:",erro)
+}
+}
+
+function atualizarBotaoFavorito(botao,registro){
+const ativo=favoritosPersonagens.has(chaveFavorito(registro))
+botao.classList.toggle("is-favorito",ativo)
+botao.setAttribute("aria-pressed",String(ativo))
+botao.setAttribute("aria-label",(ativo ? "Remover " : "Adicionar ")+registro.nome+(ativo ? " dos favoritos" : " aos favoritos"))
+botao.title=ativo ? "Remover dos favoritos" : "Adicionar aos favoritos"
+botao.textContent=ativo ? "★" : "☆"
+}
+
+function alternarFavorito(registro,botao){
+const chave=chaveFavorito(registro)
+if(favoritosPersonagens.has(chave)) favoritosPersonagens.delete(chave)
+else favoritosPersonagens.add(chave)
+salvarFavoritos()
+atualizarBotaoFavorito(botao,registro)
+atualizarResultadoBusca()
+}
+
 function criarCardPersonagem(registro){
 const cena=document.createElement("article")
 cena.className="card-scene"
 cena.dataset.personagemId=String(registro.id)
+cena.dataset.favoritoKey=chaveFavorito(registro)
 
 const virador=document.createElement("div")
 virador.className="card-flipper"
@@ -1207,6 +1318,11 @@ botaoStand.type="button"
 botaoStand.className="card-stand-externo"
 botaoStand.textContent="Ativar Stand de "+registro.nome
 botaoStand.addEventListener("click",function(){personagem(registro)})
+const botaoFavorito=document.createElement("button")
+botaoFavorito.type="button"
+botaoFavorito.className="card-favorito"
+atualizarBotaoFavorito(botaoFavorito,registro)
+botaoFavorito.addEventListener("click",function(){alternarFavorito(registro,botaoFavorito)})
 const botaoExcluir=document.createElement("button")
 botaoExcluir.type="button"
 botaoExcluir.className="card-excluir"
@@ -1215,7 +1331,7 @@ botaoExcluir.addEventListener("click",function(){excluirPersonagem(registro.id,r
 
 verso.append(tituloVerso,botaoEditar,botaoExcluir)
 virador.append(frente,verso)
-cena.append(virador,botaoStand)
+cena.append(virador,botaoFavorito,botaoStand)
 
 function voltarFrente(){
 cena.classList.remove("virado")
@@ -1252,8 +1368,18 @@ return cena
 
 async function renderizarPersonagens(){
 const registros=await acessarPersonagens("readonly",function(store){return store.getAll()})
+const ativos=registros.filter(function(registro){return !registro.excluido})
+const chavesValidas=new Set(ativos.map(chaveFavorito))
+let favoritosRemovidos=false
+favoritosPersonagens.forEach(function(chave){
+if(!chavesValidas.has(chave)){
+favoritosPersonagens.delete(chave)
+favoritosRemovidos=true
+}
+})
+if(favoritosRemovidos) salvarFavoritos()
 gradePersonagens.replaceChildren()
-registros.filter(function(registro){return !registro.excluido}).forEach(function(registro){gradePersonagens.appendChild(criarCardPersonagem(registro))})
+ativos.forEach(function(registro){gradePersonagens.appendChild(criarCardPersonagem(registro))})
 atualizarResultadoBusca()
 }
 
@@ -1280,12 +1406,21 @@ const todosCards=Array.from(gradePersonagens.querySelectorAll(".card-scene"))
 let visiveis=0
 todosCards.forEach(function(card){
 const nome=card.querySelector(".card-frente h3").textContent.toLocaleLowerCase("pt-BR")
-const corresponde=nome.includes(termo)
+const correspondeNome=nome.includes(termo)
+const correspondeFavorito=!somenteFavoritos || favoritosPersonagens.has(card.dataset.favoritoKey)
+const corresponde=correspondeNome && correspondeFavorito
 card.hidden=!corresponde
 if(corresponde) visiveis++
 })
-resultadoBusca.textContent=visiveis===1 ? "1 personagem encontrado" : visiveis+" personagens encontrados"
-if(visiveis===0) resultadoBusca.textContent="Nenhum personagem encontrado. Tente outro nome."
+if(visiveis===0){
+if(somenteFavoritos && favoritosPersonagens.size===0) resultadoBusca.textContent="Você ainda não adicionou personagens aos favoritos."
+else if(somenteFavoritos && termo) resultadoBusca.textContent="Nenhum favorito corresponde à busca."
+else if(somenteFavoritos) resultadoBusca.textContent="Nenhum personagem favoritado está disponível."
+else resultadoBusca.textContent="Nenhum personagem encontrado. Tente outro nome."
+return
+}
+if(somenteFavoritos) resultadoBusca.textContent=visiveis===1 ? "1 favorito encontrado" : visiveis+" favoritos encontrados"
+else resultadoBusca.textContent=visiveis===1 ? "1 personagem encontrado" : visiveis+" personagens encontrados"
 }
 
 function limparPreviewPersonagem(){
@@ -1452,7 +1587,16 @@ window.addEventListener("beforeunload",limparPreviewPersonagem)
 
 const buscaPersonagem=document.getElementById("buscaPersonagem")
 const resultadoBusca=document.getElementById("resultadoBusca")
+const alternarFiltroFavoritos=document.getElementById("alternarFiltroFavoritos")
 buscaPersonagem.addEventListener("input",atualizarResultadoBusca)
+alternarFiltroFavoritos.addEventListener("click",function(){
+somenteFavoritos=!somenteFavoritos
+alternarFiltroFavoritos.setAttribute("aria-pressed",String(somenteFavoritos))
+alternarFiltroFavoritos.classList.toggle("ativo",somenteFavoritos)
+alternarFiltroFavoritos.textContent=somenteFavoritos ? "★ Exibindo favoritos" : "☆ Mostrar favoritos"
+atualizarResultadoBusca()
+})
+carregarFavoritos()
 carregarPersonagensSalvos()
 
 </script>
