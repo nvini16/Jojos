@@ -383,6 +383,7 @@ cursor:pointer;
 }
 
 .card-editar{background:var(--color-yellow);color:var(--color-text-dark);}
+.card-perfil{background:var(--color-purple);color:var(--color-white);}
 .card-stand{background:var(--color-pink);color:var(--color-text-dark);}
 .card-excluir{background:var(--color-danger);color:var(--color-white);}
 
@@ -813,6 +814,120 @@ clip-path:polygon(50% 0,62% 36%,100% 50%,62% 64%,50% 100%,38% 64%,0 50%,38% 36%)
 #standEffect::before,#standEffect::after,.stand-particle{animation:none !important;display:none;}
 }
 
+
+/* PERFIL INDIVIDUAL DO PERSONAGEM */
+.dialogo-personagem{
+width:min(900px,calc(100% - 32px));
+max-width:none;
+max-height:88vh;
+padding:0;
+overflow:auto;
+border:1px solid var(--overlay-white-30);
+border-radius:20px;
+background:linear-gradient(145deg,var(--color-panel),var(--color-panel-dark));
+color:var(--color-white);
+box-shadow:0 24px 80px var(--overlay-black-35);
+}
+
+.dialogo-personagem::backdrop{
+background:var(--overlay-black-35);
+backdrop-filter:blur(7px);
+}
+
+.perfil-conteudo{
+position:relative;
+display:grid;
+grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+align-items:center;
+gap:clamp(20px,4vw,38px);
+padding:clamp(22px,4vw,38px);
+}
+
+.perfil-fechar{
+position:absolute;
+top:12px;
+right:12px;
+z-index:2;
+display:grid;
+place-items:center;
+width:42px;
+height:42px;
+border:1px solid var(--overlay-white-30);
+border-radius:50%;
+background:var(--overlay-black-35);
+color:var(--color-white);
+font-size:1.7rem;
+line-height:1;
+cursor:pointer;
+}
+
+.perfil-fechar:focus-visible{
+outline:3px solid var(--color-yellow);
+outline-offset:3px;
+}
+
+.perfil-imagem{
+width:100%;
+height:min(56vh,440px);
+object-fit:cover;
+border:1px solid var(--overlay-white-20);
+border-radius:14px;
+background:var(--color-card);
+}
+
+.perfil-texto{
+display:flex;
+flex-direction:column;
+gap:18px;
+padding:24px 4px 4px;
+}
+
+.perfil-parte{
+color:var(--color-yellow);
+font-size:.88rem;
+font-weight:bold;
+letter-spacing:.08em;
+text-transform:uppercase;
+}
+
+.perfil-texto h2{
+font-size:clamp(1.7rem,4vw,2.5rem);
+line-height:1.1;
+overflow-wrap:anywhere;
+}
+
+.perfil-campo{
+display:grid;
+gap:7px;
+}
+
+.perfil-campo strong{
+color:var(--color-subtle);
+font-size:.82rem;
+letter-spacing:.08em;
+text-transform:uppercase;
+}
+
+.perfil-campo p{
+line-height:1.6;
+overflow-wrap:anywhere;
+}
+
+@media(max-width:620px){
+.perfil-conteudo{
+grid-template-columns:1fr;
+gap:18px;
+}
+.perfil-imagem{
+height:min(38vh,280px);
+object-fit:contain;
+}
+.perfil-texto{
+gap:14px;
+padding:0 2px 4px;
+}
+}
+
 /* FOOTER */
 
 footer{
@@ -973,6 +1088,26 @@ font-size:32px;
 <h2 id="tituloStands">Stands</h2>
 <p>Escolha um personagem na galeria para liberar seu Stand.</p>
 </section>
+
+
+<dialog class="dialogo-personagem" id="dialogoPersonagem" aria-labelledby="tituloPerfilPersonagem" aria-describedby="descricaoPerfilPersonagem">
+<div class="perfil-conteudo">
+<button class="perfil-fechar" id="fecharPerfilPersonagem" type="button" aria-label="Fechar perfil" autofocus>×</button>
+<img class="perfil-imagem" id="imagemPerfilPersonagem" alt="">
+<div class="perfil-texto">
+<p class="perfil-parte" id="partePerfilPersonagem"></p>
+<h2 id="tituloPerfilPersonagem"></h2>
+<div class="perfil-campo">
+<strong>Stand</strong>
+<p id="standPerfilPersonagem"></p>
+</div>
+<div class="perfil-campo">
+<strong>Sobre</strong>
+<p id="descricaoPerfilPersonagem"></p>
+</div>
+</div>
+</div>
+</dialog>
 
 <div id="standEffect" role="status" aria-live="polite" aria-atomic="true"></div>
 
@@ -1187,6 +1322,21 @@ const gradePersonagens=document.getElementById("gradePersonagens")
 const tituloFormularioPersonagem=document.getElementById("tituloFormularioPersonagem")
 const botaoSalvarPersonagem=document.getElementById("salvarNovoPersonagem")
 const limiteImagemPersonagem=3*1024*1024
+const dialogoPersonagem=document.getElementById("dialogoPersonagem")
+const fecharPerfilPersonagem=document.getElementById("fecharPerfilPersonagem")
+const imagemPerfilPersonagem=document.getElementById("imagemPerfilPersonagem")
+const partePerfilPersonagem=document.getElementById("partePerfilPersonagem")
+const tituloPerfilPersonagem=document.getElementById("tituloPerfilPersonagem")
+const standPerfilPersonagem=document.getElementById("standPerfilPersonagem")
+const descricaoPerfilPersonagem=document.getElementById("descricaoPerfilPersonagem")
+let ultimoBotaoPerfil=null
+let urlImagemPerfilAtual=null
+const perfisPersonagensBase={
+"base-jotaro":{parte:"Parte 3 · Stardust Crusaders",stand:"Star Platinum",descricao:"Stand de curto alcance conhecido por força, velocidade e precisão excepcionais. Também consegue deter o tempo por um breve intervalo."},
+"base-dio":{parte:"Parte 3 · Stardust Crusaders",stand:"The World",descricao:"Stand de curto alcance com força e velocidade elevadas. Sua habilidade característica é parar o tempo."},
+"base-giorno":{parte:"Parte 5 · Golden Wind",stand:"Gold Experience",descricao:"Consegue conceder vida a objetos inanimados e criar formas de vida a partir deles."},
+"base-josuke":{parte:"Parte 4 · Diamond Is Unbreakable",stand:"Crazy Diamond",descricao:"Pode restaurar objetos e seres vivos ao estado anterior, mas não consegue curar o próprio usuário."}
+}
 const personagensIniciais=[
 {chave:"base-jotaro",nome:"Jotaro Kujo",imagemUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTQvTL2UjHyvXHLM3yEjxPDY6UB3aLBMZZPukTyj6BBw&s=10",stand:"ORA ORA ORA"},
 {chave:"base-dio",nome:"Dio Brando",imagemUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwNdPWTEAxIudRE6K4aXVIlc3O8B_Ak7FQn5d4u5PY1YwZxKUpbqMGn-A&s=10",stand:"ZA WARUDO"},
@@ -1228,6 +1378,54 @@ function urlDaImagemPersonagem(registro){
 if(registro.imagem instanceof Blob) return URL.createObjectURL(registro.imagem)
 return registro.imagemUrl || ""
 }
+
+function limparImagemPerfil(){
+if(urlImagemPerfilAtual){
+URL.revokeObjectURL(urlImagemPerfilAtual)
+urlImagemPerfilAtual=null
+}
+imagemPerfilPersonagem.removeAttribute("src")
+}
+
+function abrirPerfilPersonagem(registro,botaoOrigem){
+if(typeof dialogoPersonagem.showModal!=="function"){
+console.error("Este navegador não oferece suporte ao diálogo de perfil.")
+return
+}
+if(dialogoPersonagem.open) return
+
+limparImagemPerfil()
+const perfil=perfisPersonagensBase[registro.chave] || {
+parte:"Personagem personalizado",
+stand:"Não informado",
+descricao:"Este personagem foi criado neste navegador. O formulário atual registra nome e imagem; informações adicionais sobre o Stand ainda não estão disponíveis."
+}
+const origemImagem=urlDaImagemPersonagem(registro)
+imagemPerfilPersonagem.src=origemImagem
+imagemPerfilPersonagem.alt="Retrato de "+registro.nome
+if(registro.imagem instanceof Blob) urlImagemPerfilAtual=origemImagem
+
+partePerfilPersonagem.textContent=perfil.parte
+tituloPerfilPersonagem.textContent=registro.nome
+standPerfilPersonagem.textContent=perfil.stand
+descricaoPerfilPersonagem.textContent=perfil.descricao
+ultimoBotaoPerfil=botaoOrigem
+dialogoPersonagem.showModal()
+}
+
+fecharPerfilPersonagem.addEventListener("click",function(){
+dialogoPersonagem.close()
+})
+
+dialogoPersonagem.addEventListener("close",function(){
+limparImagemPerfil()
+if(ultimoBotaoPerfil && ultimoBotaoPerfil.isConnected) ultimoBotaoPerfil.focus()
+ultimoBotaoPerfil=null
+})
+
+dialogoPersonagem.addEventListener("click",function(event){
+if(event.target===dialogoPersonagem) dialogoPersonagem.close()
+})
 
 function chaveFavorito(registro){
 return registro.chave || "custom:"+registro.id
@@ -1308,6 +1506,11 @@ verso.inert=true
 
 const tituloVerso=document.createElement("h3")
 tituloVerso.textContent=registro.nome
+const botaoPerfil=document.createElement("button")
+botaoPerfil.type="button"
+botaoPerfil.className="card-perfil"
+botaoPerfil.textContent="Ver perfil"
+botaoPerfil.addEventListener("click",function(){abrirPerfilPersonagem(registro,botaoPerfil)})
 const botaoEditar=document.createElement("button")
 botaoEditar.type="button"
 botaoEditar.className="card-editar"
@@ -1329,7 +1532,7 @@ botaoExcluir.className="card-excluir"
 botaoExcluir.textContent="Excluir personagem"
 botaoExcluir.addEventListener("click",function(){excluirPersonagem(registro.id,registro.nome)})
 
-verso.append(tituloVerso,botaoEditar,botaoExcluir)
+verso.append(tituloVerso,botaoPerfil,botaoEditar,botaoExcluir)
 virador.append(frente,verso)
 cena.append(virador,botaoFavorito,botaoStand)
 
@@ -1583,7 +1786,10 @@ virado.querySelector(".card-frente").focus()
 }
 })
 
-window.addEventListener("beforeunload",limparPreviewPersonagem)
+window.addEventListener("beforeunload",function(){
+limparPreviewPersonagem()
+limparImagemPerfil()
+})
 
 const buscaPersonagem=document.getElementById("buscaPersonagem")
 const resultadoBusca=document.getElementById("resultadoBusca")
