@@ -527,6 +527,48 @@ background:var(--overlay-yellow-07);
 box-shadow:0 0 0 3px var(--overlay-yellow-18);
 }
 
+.campo-stand-personagem,
+.campo-descricao-personagem{
+display:grid;
+gap:10px;
+}
+
+.formulario-personagem textarea{
+width:100%;
+min-height:112px;
+padding:13px 15px;
+border:1.5px solid var(--overlay-white-30);
+border-radius:10px;
+background:linear-gradient(135deg,var(--overlay-white-10),var(--overlay-white-05));
+color:var(--color-white);
+font:inherit;
+line-height:1.5;
+resize:vertical;
+transition:border-color .2s,box-shadow .2s,background .2s;
+}
+
+.formulario-personagem textarea::placeholder{
+color:var(--color-muted);
+opacity:1;
+}
+
+.formulario-personagem textarea:hover{
+border-color:var(--overlay-yellow-65);
+}
+
+.formulario-personagem textarea:focus-visible{
+outline:none;
+border-color:var(--color-yellow);
+background:var(--overlay-yellow-07);
+box-shadow:0 0 0 3px var(--overlay-yellow-18);
+}
+
+.formulario-personagem input:disabled,
+.formulario-personagem textarea:disabled{
+opacity:.65;
+cursor:not-allowed;
+}
+
 .campo-imagem-personagem{display:grid;gap:9px;}
 
 .seletor-imagem{
@@ -1056,6 +1098,16 @@ font-size:32px;
 <label for="nomeNovoPersonagem">Nome do personagem</label>
 <input id="nomeNovoPersonagem" name="nome" type="text" maxlength="60" required autocomplete="off" placeholder="Ex.: Joseph Joestar">
 </div>
+<div class="campo-stand-personagem">
+<label for="standNovoPersonagem">Nome do Stand (opcional)</label>
+<input id="standNovoPersonagem" name="stand" type="text" maxlength="60" autocomplete="off" placeholder="Ex.: Star Platinum" aria-describedby="ajudaStandPersonagem">
+<small id="ajudaStandPersonagem">Esse nome será usado na animação de ativação do Stand.</small>
+</div>
+<div class="campo-descricao-personagem">
+<label for="descricaoNovoPersonagem">Descrição e habilidades (opcional)</label>
+<textarea id="descricaoNovoPersonagem" name="descricao" maxlength="500" rows="4" placeholder="Descreva o personagem, seu Stand ou suas habilidades." aria-describedby="ajudaDescricaoPersonagem"></textarea>
+<small id="ajudaDescricaoPersonagem">Máximo de 500 caracteres.</small>
+</div>
 <div class="campo-imagem-personagem">
 <label for="imagemNovoPersonagem">Imagem do personagem</label>
 <label class="seletor-imagem" for="imagemNovoPersonagem">
@@ -1315,6 +1367,8 @@ const abrirFormularioPersonagem=document.getElementById("abrirFormularioPersonag
 const painelFormularioPersonagem=document.getElementById("painelFormularioPersonagem")
 const formularioPersonagem=document.getElementById("formularioPersonagem")
 const nomeNovoPersonagem=document.getElementById("nomeNovoPersonagem")
+const standNovoPersonagem=document.getElementById("standNovoPersonagem")
+const descricaoNovoPersonagem=document.getElementById("descricaoNovoPersonagem")
 const imagemNovoPersonagem=document.getElementById("imagemNovoPersonagem")
 const previewNovoPersonagem=document.getElementById("previewNovoPersonagem")
 const mensagemFormularioPersonagem=document.getElementById("mensagemFormularioPersonagem")
@@ -1387,6 +1441,17 @@ urlImagemPerfilAtual=null
 imagemPerfilPersonagem.removeAttribute("src")
 }
 
+function dadosPerfilPersonalizado(registro){
+const registroLegado=!Object.prototype.hasOwnProperty.call(registro,"descricao")
+const stand=String(registro.stand || "").trim()
+const descricao=String(registro.descricao || "").trim()
+return {
+parte:"Personagem personalizado",
+stand:registroLegado && stand===registro.nome ? "Não informado" : (stand || "Não informado"),
+descricao:descricao || "Nenhuma descrição ou habilidade foi cadastrada para este personagem."
+}
+}
+
 function abrirPerfilPersonagem(registro,botaoOrigem){
 if(typeof dialogoPersonagem.showModal!=="function"){
 console.error("Este navegador não oferece suporte ao diálogo de perfil.")
@@ -1395,11 +1460,7 @@ return
 if(dialogoPersonagem.open) return
 
 limparImagemPerfil()
-const perfil=perfisPersonagensBase[registro.chave] || {
-parte:"Personagem personalizado",
-stand:"Não informado",
-descricao:"Este personagem foi criado neste navegador. O formulário atual registra nome e imagem; informações adicionais sobre o Stand ainda não estão disponíveis."
-}
+const perfil=perfisPersonagensBase[registro.chave] || dadosPerfilPersonalizado(registro)
 const origemImagem=urlDaImagemPersonagem(registro)
 imagemPerfilPersonagem.src=origemImagem
 imagemPerfilPersonagem.alt="Retrato de "+registro.nome
@@ -1638,6 +1699,8 @@ previewNovoPersonagem.hidden=true
 function abrirFormularioNovoPersonagem(){
 idPersonagemEditando=null
 formularioPersonagem.reset()
+standNovoPersonagem.disabled=false
+descricaoNovoPersonagem.disabled=false
 document.getElementById("nomeArquivoPersonagem").textContent="Nenhum arquivo selecionado"
 limparPreviewPersonagem()
 tituloFormularioPersonagem.textContent="Novo personagem"
@@ -1665,6 +1728,12 @@ formularioPersonagem.reset()
 document.getElementById("nomeArquivoPersonagem").textContent="Nenhum arquivo selecionado"
 limparPreviewPersonagem()
 nomeNovoPersonagem.value=registro.nome
+const perfilBase=registro.chave ? perfisPersonagensBase[registro.chave] : null
+const registroLegado=!registro.chave && !Object.prototype.hasOwnProperty.call(registro,"descricao")
+standNovoPersonagem.value=perfilBase ? perfilBase.stand : (registroLegado && registro.stand===registro.nome ? "" : (registro.stand || ""))
+descricaoNovoPersonagem.value=perfilBase ? perfilBase.descricao : (registro.descricao || "")
+standNovoPersonagem.disabled=Boolean(registro.chave)
+descricaoNovoPersonagem.disabled=Boolean(registro.chave)
 tituloFormularioPersonagem.textContent="Editar personagem"
 botaoSalvarPersonagem.textContent="Salvar alterações"
 imagemNovoPersonagem.required=false
@@ -1676,7 +1745,7 @@ previewNovoPersonagem.hidden=false
 previewNovoPersonagem.src=registro.imagemUrl
 previewNovoPersonagem.hidden=false
 }
-mensagemFormularioPersonagem.textContent="Selecione uma nova imagem apenas se quiser trocá-la."
+mensagemFormularioPersonagem.textContent=registro.chave ? "Os dados de Stand dos personagens originais são definidos pelo projeto." : "Você pode atualizar o Stand e a descrição sem trocar a imagem."
 painelFormularioPersonagem.hidden=false
 abrirFormularioPersonagem.setAttribute("aria-expanded","true")
 nomeNovoPersonagem.focus()
@@ -1723,6 +1792,8 @@ mensagemFormularioPersonagem.textContent=""
 formularioPersonagem.addEventListener("submit",async function(event){
 event.preventDefault()
 const nome=nomeNovoPersonagem.value.trim()
+const stand=standNovoPersonagem.value.trim()
+const descricao=descricaoNovoPersonagem.value.trim()
 const imagem=imagemNovoPersonagem.files[0]
 if(!nome){
 mensagemFormularioPersonagem.textContent="Informe o nome do personagem."
@@ -1743,6 +1814,10 @@ if(idPersonagemEditando){
 const atual=await acessarPersonagens("readonly",function(store){return store.get(idPersonagemEditando)})
 if(!atual) throw new Error("Personagem não encontrado.")
 atual.nome=nome
+if(!atual.chave){
+atual.stand=stand
+atual.descricao=descricao
+}
 if(imagem){
 atual.imagem=imagem
 delete atual.imagemUrl
@@ -1750,10 +1825,12 @@ delete atual.imagemUrl
 await acessarPersonagens("readwrite",function(store){return store.put(atual)})
 }else{
 await acessarPersonagens("readwrite",function(store){
-return store.add({nome:nome,imagem:imagem,criadoEm:new Date().toISOString(),stand:nome})
+return store.add({nome:nome,imagem:imagem,criadoEm:new Date().toISOString(),stand:stand,descricao:descricao})
 })
 }
 formularioPersonagem.reset()
+standNovoPersonagem.disabled=false
+descricaoNovoPersonagem.disabled=false
 limparPreviewPersonagem()
 idPersonagemEditando=null
 painelFormularioPersonagem.hidden=true
