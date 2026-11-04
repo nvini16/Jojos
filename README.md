@@ -25,7 +25,7 @@ Abra o arquivo `index.html` em um navegador moderno ou acesse a versão publicad
 - Galeria com busca por nome.
 - Cartões interativos com ações de perfil, edição, exclusão e ativação de Stand.
 - Perfis dos quatro personagens iniciais com parte da obra, nome do Stand e descrição.
-- Cadastro de personagens personalizados com imagem local.
+- Cadastro e edição de personagens personalizados com imagem local, nome do Stand e descrição/habilidades opcionais.
 - Favoritos persistentes e filtro combinado com a busca.
 - Efeitos visuais de ativação de Stand com tratamento para preferência por movimento reduzido.
 - Reprodução de música tema mediante interação do visitante.
@@ -39,7 +39,7 @@ Os dados são armazenados localmente no navegador:
 
 Esses dados não são sincronizados entre dispositivos nem enviados a um servidor pelo aplicativo. Limpar os dados do site ou trocar de navegador/perfil pode remover ou tornar os registros inacessíveis.
 
-Os perfis dos personagens personalizados exibem nome e imagem; informações específicas sobre o Stand ainda não são cadastradas pelo formulário.
+Os perfis dos personagens personalizados exibem nome e imagem. O formulário também permite informar, opcionalmente, o nome do Stand e uma descrição de até 500 caracteres com habilidades ou outras informações. Registros antigos sem esses campos continuam compatíveis e aparecem com o Stand como não informado.
 
 ## Acessibilidade e compatibilidade
 
