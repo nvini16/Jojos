@@ -27,6 +27,7 @@ Abra o arquivo `index.html` em um navegador moderno ou acesse a versão publicad
 - Perfis dos quatro personagens iniciais com parte da obra, nome do Stand e descrição.
 - Cadastro e edição de personagens personalizados com imagem local, nome do Stand e descrição/habilidades opcionais.
 - Favoritos persistentes e filtro combinado com a busca.
+- Indicadores verdes reutilizáveis de novidade, exibidos na primeira visita após uma publicação e dispensados ao abrir a funcionalidade ou na próxima visita.
 - Efeitos visuais de ativação de Stand com tratamento para preferência por movimento reduzido.
 - Reprodução de música tema mediante interação do visitante.
 
