@@ -385,6 +385,26 @@ cursor:pointer;
 .card-editar{background:var(--color-yellow);color:var(--color-text-dark);}
 .card-perfil{background:var(--color-purple);color:var(--color-white);}
 .card-stand{background:var(--color-pink);color:var(--color-text-dark);}
+
+/* Indicador reutilizável de funcionalidades recém-publicadas. */
+.indicador-novo{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+margin-left:8px;
+padding:3px 8px;
+border:1px solid #8ff0a4;
+border-radius:999px;
+background:#16803c;
+color:#fff;
+font-size:11px;
+font-weight:800;
+line-height:1.2;
+letter-spacing:.02em;
+vertical-align:middle;
+white-space:nowrap;
+box-shadow:0 0 10px rgba(40,200,90,.28);
+}
 .card-excluir{background:var(--color-danger);color:var(--color-white);}
 
 .card-face button:focus-visible{
@@ -1404,6 +1424,39 @@ let favoritosPersonagens=new Set()
 let somenteFavoritos=false
 const chaveArmazenamentoFavoritos="jojos-favoritos-v1"
 
+// Registro centralizado das novidades. Atualize a versão quando uma funcionalidade evoluir.
+const novidadesAtivas=new Set()
+
+function registrarNovidade(id,versao){
+const chave="jojos-novidade-"+id
+try{
+if(localStorage.getItem(chave)===versao) return
+novidadesAtivas.add(id)
+// A visita atual conta como visualização: não reapresentar na próxima abertura.
+localStorage.setItem(chave,versao)
+}catch(erro){
+console.warn("Não foi possível registrar a visualização da novidade:",erro)
+novidadesAtivas.add(id)
+}
+}
+
+function criarIndicadorNovo(id){
+if(!novidadesAtivas.has(id)) return null
+const indicador=document.createElement("span")
+indicador.className="indicador-novo"
+indicador.textContent="Novo"
+indicador.setAttribute("aria-hidden","true")
+indicador.dataset.novidade=id
+return indicador
+}
+
+function dispensarNovidade(id){
+novidadesAtivas.delete(id)
+document.querySelectorAll("[data-novidade]").forEach(function(indicador){
+if(indicador.dataset.novidade===id) indicador.remove()
+})
+}
+
 function abrirBancoPersonagens(){
 return new Promise(function(resolve,reject){
 const requisicao=indexedDB.open("jojos-personagens",2)
@@ -1571,7 +1624,13 @@ const botaoPerfil=document.createElement("button")
 botaoPerfil.type="button"
 botaoPerfil.className="card-perfil"
 botaoPerfil.textContent="Ver perfil"
-botaoPerfil.addEventListener("click",function(){abrirPerfilPersonagem(registro,botaoPerfil)})
+botaoPerfil.setAttribute("aria-label","Ver perfil de "+registro.nome)
+const indicadorPerfil=criarIndicadorNovo("perfil-personagens")
+if(indicadorPerfil) botaoPerfil.appendChild(indicadorPerfil)
+botaoPerfil.addEventListener("click",function(){
+dispensarNovidade("perfil-personagens")
+abrirPerfilPersonagem(registro,botaoPerfil)
+})
 const botaoEditar=document.createElement("button")
 botaoEditar.type="button"
 botaoEditar.className="card-editar"
@@ -1879,6 +1938,7 @@ alternarFiltroFavoritos.classList.toggle("ativo",somenteFavoritos)
 alternarFiltroFavoritos.textContent=somenteFavoritos ? "★ Exibindo favoritos" : "☆ Mostrar favoritos"
 atualizarResultadoBusca()
 })
+registrarNovidade("perfil-personagens","1")
 carregarFavoritos()
 carregarPersonagensSalvos()
 
