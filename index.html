@@ -1453,7 +1453,14 @@ return indicador
 function dispensarNovidade(id){
 novidadesAtivas.delete(id)
 document.querySelectorAll("[data-novidade]").forEach(function(indicador){
-if(indicador.dataset.novidade===id) indicador.remove()
+if(indicador.dataset.novidade===id){
+const controle=indicador.parentElement
+if(controle && controle.dataset.ariaLabelBase){
+controle.setAttribute("aria-label",controle.dataset.ariaLabelBase)
+delete controle.dataset.ariaLabelBase
+}
+indicador.remove()
+}
 })
 }
 
@@ -1508,9 +1515,9 @@ descricao:descricao || "Nenhuma descrição ou habilidade foi cadastrada para es
 function abrirPerfilPersonagem(registro,botaoOrigem){
 if(typeof dialogoPersonagem.showModal!=="function"){
 console.error("Este navegador não oferece suporte ao diálogo de perfil.")
-return
+return false
 }
-if(dialogoPersonagem.open) return
+if(dialogoPersonagem.open) return false
 
 limparImagemPerfil()
 const perfil=perfisPersonagensBase[registro.chave] || dadosPerfilPersonalizado(registro)
@@ -1525,6 +1532,7 @@ standPerfilPersonagem.textContent=perfil.stand
 descricaoPerfilPersonagem.textContent=perfil.descricao
 ultimoBotaoPerfil=botaoOrigem
 dialogoPersonagem.showModal()
+return true
 }
 
 fecharPerfilPersonagem.addEventListener("click",function(){
@@ -1624,12 +1632,18 @@ const botaoPerfil=document.createElement("button")
 botaoPerfil.type="button"
 botaoPerfil.className="card-perfil"
 botaoPerfil.textContent="Ver perfil"
-botaoPerfil.setAttribute("aria-label","Ver perfil de "+registro.nome)
+const nomeAcessivelPerfil="Ver perfil de "+registro.nome
+botaoPerfil.setAttribute("aria-label",nomeAcessivelPerfil)
 const indicadorPerfil=criarIndicadorNovo("perfil-personagens")
-if(indicadorPerfil) botaoPerfil.appendChild(indicadorPerfil)
+if(indicadorPerfil){
+botaoPerfil.appendChild(indicadorPerfil)
+botaoPerfil.setAttribute("aria-label",nomeAcessivelPerfil+". Novo.")
+botaoPerfil.dataset.ariaLabelBase=nomeAcessivelPerfil
+}
 botaoPerfil.addEventListener("click",function(){
+if(abrirPerfilPersonagem(registro,botaoPerfil)){
 dispensarNovidade("perfil-personagens")
-abrirPerfilPersonagem(registro,botaoPerfil)
+}
 })
 const botaoEditar=document.createElement("button")
 botaoEditar.type="button"
