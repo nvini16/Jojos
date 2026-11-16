@@ -129,6 +129,26 @@ color:var(--color-yellow);
 text-shadow:0 0 10px var(--overlay-yellow-50);
 }
 
+/* Atalho de teclado para ignorar a navegação e alcançar o conteúdo principal. */
+.pular-conteudo{
+position:fixed;
+top:8px;
+left:8px;
+z-index:2000;
+padding:10px 14px;
+border-radius:8px;
+background:var(--color-yellow);
+color:var(--color-black);
+font-weight:bold;
+text-decoration:none;
+transform:translateY(calc(-100% - 12px));
+}
+.pular-conteudo:focus{
+transform:translateY(0);
+outline:3px solid var(--color-white);
+outline-offset:2px;
+}
+
 /* Entrada suave das seções */
 .reveal-pending{
 opacity:0;
@@ -1065,6 +1085,8 @@ font-size:32px;
 
 <body>
 
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+
 <nav>
 
 <div class="logo">JOJO</div>
@@ -1078,6 +1100,8 @@ font-size:32px;
 </div>
 
 </nav>
+
+<main id="conteudo-principal" tabindex="-1">
 
 <section class="hero" id="inicio">
 
@@ -1161,6 +1185,7 @@ font-size:32px;
 <p>Escolha um personagem na galeria para liberar seu Stand.</p>
 </section>
 
+</main>
 
 <dialog class="dialogo-personagem" id="dialogoPersonagem" aria-labelledby="tituloPerfilPersonagem" aria-describedby="descricaoPerfilPersonagem">
 <div class="perfil-conteudo">
