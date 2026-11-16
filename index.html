@@ -1639,7 +1639,9 @@ imagem.decoding="async"
 imagem.width=400
 imagem.height=250
 if(registro.imagem instanceof Blob){
-imagem.addEventListener("load",function(){URL.revokeObjectURL(urlImagem)},{once:true})
+const liberarUrlImagem=function(){URL.revokeObjectURL(urlImagem)}
+imagem.addEventListener("load",liberarUrlImagem,{once:true})
+imagem.addEventListener("error",liberarUrlImagem,{once:true})
 }
 
 const titulo=document.createElement("h3")
