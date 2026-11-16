@@ -44,7 +44,7 @@ Os perfis dos personagens personalizados exibem nome e imagem. O formulário tam
 
 ## Acessibilidade e compatibilidade
 
-O projeto inclui foco visível, controles com rótulos acessíveis, suporte a teclado em interações principais e respeito à preferência `prefers-reduced-motion`. O perfil individual utiliza o elemento nativo HTML `<dialog>` com abertura modal, fechamento por botão ou tecla Escape e retorno do foco ao controle que abriu a janela.
+O projeto inclui foco visível, atalho de teclado para pular a navegação e acessar o conteúdo principal (`<main>`), controles com rótulos acessíveis, suporte a teclado nas interações principais e respeito à preferência `prefers-reduced-motion`. O perfil individual utiliza o elemento nativo HTML `<dialog>` com abertura modal, fechamento por botão ou tecla Escape e retorno do foco ao controle que abriu a janela.
 
 ## Estrutura atual
 
