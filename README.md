@@ -19,6 +19,18 @@ Abra o arquivo `index.html` em um navegador moderno ou acesse a versão publicad
 
 - https://nvini16.github.io/Jojos/
 
+## Testes automatizados
+
+Os testes estáticos usam o test runner nativo do Node.js e não exigem dependências adicionais.
+
+Para executá-los localmente, com Node.js 24 ou compatível:
+
+```bash
+node --test
+```
+
+O workflow de qualidade executa os mesmos testes em cada push e em pull requests direcionados à branch `main`. Eles verificam contratos estruturais e trechos críticos do JavaScript, mas não substituem testes em navegador, testes visuais ou auditorias com tecnologias assistivas.
+
 ## Funcionalidades
 
 - Navegação por seções com rolagem suave e indicação da seção ativa.
