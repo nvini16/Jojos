@@ -1443,6 +1443,7 @@ const personagensIniciais=[
 {chave:"base-josuke",nome:"Josuke Higashikata",imagemUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdjs0ziQheNAhfitjZYwgMwuLyCXQEHJJMeFVrJF18oA&s=10",stand:"DORA DORA"}
 ]
 let urlPreviewPersonagem=null
+const urlsImagemCardsPendentes=new Set()
 let bancoPersonagens=null
 let idPersonagemEditando=null
 let favoritosPersonagens=new Set()
@@ -1516,6 +1517,18 @@ requisicao.onerror=function(){reject(requisicao.error)}
 function urlDaImagemPersonagem(registro){
 if(registro.imagem instanceof Blob) return URL.createObjectURL(registro.imagem)
 return registro.imagemUrl || ""
+}
+
+function liberarUrlImagemCard(url){
+if(!urlsImagemCardsPendentes.delete(url)) return
+URL.revokeObjectURL(url)
+}
+
+function limparUrlsImagemCardsPendentes(){
+for(const url of urlsImagemCardsPendentes){
+URL.revokeObjectURL(url)
+}
+urlsImagemCardsPendentes.clear()
 }
 
 function limparImagemPerfil(){
@@ -1639,7 +1652,8 @@ imagem.decoding="async"
 imagem.width=400
 imagem.height=250
 if(registro.imagem instanceof Blob){
-const liberarUrlImagem=function(){URL.revokeObjectURL(urlImagem)}
+urlsImagemCardsPendentes.add(urlImagem)
+const liberarUrlImagem=function(){liberarUrlImagemCard(urlImagem)}
 imagem.addEventListener("load",liberarUrlImagem,{once:true})
 imagem.addEventListener("error",liberarUrlImagem,{once:true})
 }
@@ -1742,6 +1756,7 @@ favoritosRemovidos=true
 }
 })
 if(favoritosRemovidos) salvarFavoritos()
+limparUrlsImagemCardsPendentes()
 gradePersonagens.replaceChildren()
 ativos.forEach(function(registro){gradePersonagens.appendChild(criarCardPersonagem(registro))})
 atualizarResultadoBusca()
@@ -1964,6 +1979,7 @@ virado.querySelector(".card-frente").focus()
 })
 
 window.addEventListener("beforeunload",function(){
+limparUrlsImagemCardsPendentes()
 limparPreviewPersonagem()
 limparImagemPerfil()
 })
