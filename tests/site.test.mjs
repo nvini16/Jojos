@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
-import { Script } from "node:vm";
+import { Script, runInNewContext } from "node:vm";
 
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 
@@ -25,6 +25,25 @@ function getAttribute(attributes, name) {
 function getOpeningTags(name) {
   return [...html.matchAll(new RegExp(`<${name}\\b([^>]*)>`, "gi"))]
     .map(([, attributes]) => attributes);
+}
+
+
+function extractFunction(source, name) {
+  const start = source.indexOf("function " + name + "(");
+  assert.notEqual(start, -1, "função " + name + " não encontrada");
+
+  const bodyStart = source.indexOf("{", start);
+  let depth = 0;
+
+  for (let index = bodyStart; index < source.length; index += 1) {
+    if (source[index] === "{") depth += 1;
+    if (source[index] === "}") {
+      depth -= 1;
+      if (depth === 0) return source.slice(start, index + 1);
+    }
+  }
+
+  assert.fail("corpo da função " + name + " não foi fechado");
 }
 
 test("os scripts JavaScript embutidos possuem sintaxe válida", () => {
@@ -74,6 +93,8 @@ test("a preferência por movimento reduzido desativa animações, transições e
 });
 
 test("URLs temporárias das imagens dos cartões são liberadas em sucesso e falha", () => {
+  assert.match(javascript, /urlsImagemCardsPendentes\.add\(urlImagem\)/);
+  assert.match(javascript, /liberarUrlImagemCard\(urlImagem\)/);
   assert.match(
     javascript,
     /imagem\.addEventListener\(\s*["']load["']\s*,\s*liberarUrlImagem\s*,\s*\{\s*once\s*:\s*true\s*\}\s*\)/
@@ -82,6 +103,36 @@ test("URLs temporárias das imagens dos cartões são liberadas em sucesso e fal
     javascript,
     /imagem\.addEventListener\(\s*["']error["']\s*,\s*liberarUrlImagem\s*,\s*\{\s*once\s*:\s*true\s*\}\s*\)/
   );
+});
+
+test("URLs de imagens ainda não carregadas são liberadas ao reconstruir a galeria", () => {
+  assert.match(javascript, /limparUrlsImagemCardsPendentes\(\)\s*gradePersonagens\.replaceChildren\(\)/);
+  assert.match(javascript, /window\.addEventListener\(\s*["']beforeunload["'][\s\S]*?limparUrlsImagemCardsPendentes\(\)/);
+
+  const declaration = javascript.match(/const urlsImagemCardsPendentes=new Set\(\)/)?.[0];
+  assert.ok(declaration, "registro de URLs pendentes não encontrado");
+
+  const source = [
+    declaration,
+    extractFunction(javascript, "liberarUrlImagemCard"),
+    extractFunction(javascript, "limparUrlsImagemCardsPendentes")
+  ].join("\n");
+  const revoked = [];
+  const context = {
+    URL: { revokeObjectURL(url) { revoked.push(url); } }
+  };
+
+  runInNewContext(source, context);
+  runInNewContext([
+    "urlsImagemCardsPendentes.add(\"blob:loaded\");",
+    "liberarUrlImagemCard(\"blob:loaded\");",
+    "urlsImagemCardsPendentes.add(\"blob:lazy-pending\");",
+    "urlsImagemCardsPendentes.add(\"blob:another-pending\");",
+    "limparUrlsImagemCardsPendentes();",
+    "liberarUrlImagemCard(\"blob:lazy-pending\");"
+  ].join("\n"), context);
+
+  assert.deepEqual(revoked, ["blob:loaded", "blob:lazy-pending", "blob:another-pending"]);
 });
 
 test("o diálogo de perfil mantém fechamento e restauração de foco", () => {
