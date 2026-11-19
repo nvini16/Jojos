@@ -1506,11 +1506,29 @@ requisicao.onerror=function(){reject(requisicao.error)}
 
 function acessarPersonagens(modo,operacao){
 return new Promise(function(resolve,reject){
+let resultado
+let finalizada=false
+function rejeitar(erro){
+if(finalizada) return
+finalizada=true
+reject(erro || new Error("A operação no armazenamento local falhou."))
+}
+try{
 const transacao=bancoPersonagens.transaction("personagens",modo)
 const store=transacao.objectStore("personagens")
 const requisicao=operacao(store)
-requisicao.onsuccess=function(){resolve(requisicao.result)}
-requisicao.onerror=function(){reject(requisicao.error)}
+requisicao.onsuccess=function(){resultado=requisicao.result}
+requisicao.onerror=function(){rejeitar(requisicao.error)}
+transacao.oncomplete=function(){
+if(finalizada) return
+finalizada=true
+resolve(resultado)
+}
+transacao.onerror=function(){rejeitar(requisicao.error || transacao.error)}
+transacao.onabort=function(){rejeitar(transacao.error || requisicao.error)}
+}catch(erro){
+rejeitar(erro)
+}
 })
 }
 
