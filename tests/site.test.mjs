@@ -154,3 +154,49 @@ test("o JavaScript não utiliza sinks comuns de injeção HTML ou execução din
     /\b(?:innerHTML|outerHTML|insertAdjacentHTML)\b|\bdocument\.write\s*\(|\beval\s*\(|\bnew\s+Function\s*\(/
   );
 });
+
+test("operações IndexedDB só resolvem após commit e rejeitam abort", async () => {
+  const source = extractFunction(javascript, "acessarPersonagens");
+  const transactions = [];
+  const context = {
+    bancoPersonagens: {
+      transaction(storeName, mode) {
+        assert.equal(storeName, "personagens");
+        const request = {};
+        const transaction = {
+          error: null,
+          objectStore(name) {
+            assert.equal(name, "personagens");
+            return { getAll() { return request; } };
+          }
+        };
+        transactions.push({ transaction, request, mode });
+        return transaction;
+      }
+    }
+  };
+
+  runInNewContext(source, context);
+
+  const committedOperation = context.acessarPersonagens("readwrite", store => store.getAll());
+  const committed = transactions[0];
+  committed.request.result = ["persistido"];
+  committed.request.onsuccess();
+
+  let resolvedBeforeCommit = false;
+  committedOperation.then(() => { resolvedBeforeCommit = true; });
+  await Promise.resolve();
+  assert.equal(resolvedBeforeCommit, false, "a operação não pode resolver antes do commit");
+
+  committed.transaction.oncomplete();
+  assert.deepEqual(await committedOperation, ["persistido"]);
+
+  const abortedOperation = context.acessarPersonagens("readwrite", store => store.getAll());
+  const aborted = transactions[1];
+  aborted.request.result = ["não persistido"];
+  aborted.request.onsuccess();
+  aborted.transaction.error = new Error("QuotaExceededError");
+  aborted.transaction.onabort();
+
+  await assert.rejects(abortedOperation, /QuotaExceededError/);
+});
