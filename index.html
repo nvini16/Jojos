@@ -1780,16 +1780,56 @@ ativos.forEach(function(registro){gradePersonagens.appendChild(criarCardPersonag
 atualizarResultadoBusca()
 }
 
+function garantirPersonagensIniciais(){
+return new Promise(function(resolve,reject){
+let finalizada=false
+let erroOperacao=null
+function rejeitar(erro){
+if(finalizada) return
+finalizada=true
+reject(erro || new Error("Não foi possível inicializar os personagens."))
+}
+try{
+const transacao=bancoPersonagens.transaction("personagens","readwrite")
+const store=transacao.objectStore("personagens")
+const requisicao=store.getAll()
+requisicao.onsuccess=function(){
+try{
+const chaves=new Set(requisicao.result.map(function(item){return item.chave}).filter(Boolean))
+for(const base of personagensIniciais){
+if(!chaves.has(base.chave)){
+const inclusao=store.add(base)
+inclusao.onerror=function(){erroOperacao=inclusao.error}
+chaves.add(base.chave)
+}
+}
+}catch(erro){
+erroOperacao=erro
+try{transacao.abort()}catch(erroAbortar){}
+rejeitar(erro)
+}
+}
+requisicao.onerror=function(){
+erroOperacao=requisicao.error
+rejeitar(erroOperacao)
+}
+transacao.oncomplete=function(){
+if(finalizada) return
+finalizada=true
+resolve()
+}
+transacao.onerror=function(){rejeitar(erroOperacao || transacao.error || requisicao.error)}
+transacao.onabort=function(){rejeitar(erroOperacao || transacao.error || requisicao.error)}
+}catch(erro){
+rejeitar(erro)
+}
+})
+}
+
 async function carregarPersonagensSalvos(){
 try{
 bancoPersonagens=await abrirBancoPersonagens()
-const existentes=await acessarPersonagens("readonly",function(store){return store.getAll()})
-const chaves=new Set(existentes.map(function(item){return item.chave}).filter(Boolean))
-for(const base of personagensIniciais){
-if(!chaves.has(base.chave)){
-await acessarPersonagens("readwrite",function(store){return store.add(base)})
-}
-}
+await garantirPersonagensIniciais()
 await renderizarPersonagens()
 }catch(erro){
 console.error("Não foi possível carregar os personagens:",erro)
