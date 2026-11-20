@@ -200,3 +200,67 @@ test("operações IndexedDB só resolvem após commit e rejeitam abort", async (
 
   await assert.rejects(abortedOperation, /QuotaExceededError/);
 });
+
+
+test("a inicialização dos personagens base evita duplicações entre abas concorrentes", async () => {
+  const source = extractFunction(javascript, "garantirPersonagensIniciais");
+  const registros = [];
+  const transacoes = [];
+  const context = {
+    personagensIniciais: [
+      { chave: "base-jotaro", nome: "Jotaro" },
+      { chave: "base-dio", nome: "Dio" },
+      { chave: "base-giorno", nome: "Giorno" },
+      { chave: "base-josuke", nome: "Josuke" }
+    ],
+    bancoPersonagens: {
+      transaction(storeName, mode) {
+        assert.equal(storeName, "personagens");
+        assert.equal(mode, "readwrite");
+        const pendentes = [];
+        const request = {};
+        const transaction = {
+          objectStore(name) {
+            assert.equal(name, "personagens");
+            return {
+              getAll() { return request; },
+              add(record) { pendentes.push(record); return {}; }
+            };
+          }
+        };
+        transacoes.push({ transaction, request, pendentes });
+        return transaction;
+      }
+    }
+  };
+
+  runInNewContext(source, context);
+
+  const primeiraInicializacao = context.garantirPersonagensIniciais();
+  const segundaInicializacao = context.garantirPersonagensIniciais();
+  assert.equal(transacoes.length, 2, "cada inicialização deve criar sua própria transação");
+
+  // A segunda transação readwrite só lê após a primeira concluir.
+  transacoes[0].request.result = registros.slice();
+  transacoes[0].request.onsuccess();
+  assert.deepEqual(
+    transacoes[0].pendentes.map((item) => item.chave),
+    ["base-jotaro", "base-dio", "base-giorno", "base-josuke"]
+  );
+
+  registros.push(...transacoes[0].pendentes);
+  transacoes[0].transaction.oncomplete();
+
+  transacoes[1].request.result = registros.slice();
+  transacoes[1].request.onsuccess();
+  assert.deepEqual(
+    transacoes[1].pendentes.map((item) => item.chave),
+    [],
+    "a segunda inicialização deve reconhecer os registros já confirmados"
+  );
+  transacoes[1].transaction.oncomplete();
+
+  await Promise.all([primeiraInicializacao, segundaInicializacao]);
+  assert.equal(registros.length, 4);
+  assert.equal(new Set(registros.map((item) => item.chave)).size, 4);
+});
