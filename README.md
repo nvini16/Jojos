@@ -48,6 +48,7 @@ O workflow de qualidade executa os mesmos testes em cada push e em pull requests
 Os dados são armazenados localmente no navegador:
 
 - Personagens personalizados e imagens: IndexedDB, banco `jojos-personagens`.
+- Os quatro personagens iniciais são verificados e inseridos em uma única transação de escrita, evitando duplicações quando mais de uma aba inicia o site ao mesmo tempo.
 - Favoritos: localStorage, chave `jojos-favoritos-v1`.
 
 Esses dados não são sincronizados entre dispositivos nem enviados a um servidor pelo aplicativo. Limpar os dados do site ou trocar de navegador/perfil pode remover ou tornar os registros inacessíveis.
