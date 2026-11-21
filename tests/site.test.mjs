@@ -264,3 +264,69 @@ test("a inicialização dos personagens base evita duplicações entre abas conc
   assert.equal(registros.length, 4);
   assert.equal(new Set(registros.map((item) => item.chave)).size, 4);
 });
+
+test("o player de música é carregado sob demanda em um iframe visível e acessível", () => {
+  const button = getOpeningTags("button").find((attributes) =>
+    getAttribute(attributes, "id") === "botaoMusica"
+  );
+  const container = getOpeningTags("div").find((attributes) =>
+    getAttribute(attributes, "id") === "playerContainer"
+  );
+  const iframe = getOpeningTags("iframe").find((attributes) =>
+    getAttribute(attributes, "id") === "player"
+  );
+
+  assert.ok(button, "botão da música não encontrado");
+  assert.equal(getAttribute(button, "aria-controls"), "playerContainer");
+  assert.equal(getAttribute(button, "aria-expanded"), "false");
+  assert.ok(container && /\\bhidden\\b/.test(container), "player deve iniciar fechado");
+  assert.ok(iframe, "iframe do YouTube não encontrado");
+  assert.equal(getAttribute(iframe, "title"), "Reprodutor da música tema do JOJOs");
+  assert.equal(getAttribute(iframe, "width"), "356");
+  assert.equal(getAttribute(iframe, "height"), "200");
+  assert.equal(getAttribute(iframe, "referrerpolicy"), "strict-origin-when-cross-origin");
+  assert.doesNotMatch(iframe, /\\bsrc\\s*=/, "iframe não deve carregar antes da interação");
+  assert.match(css, /\\.player-musica\\{[^}]*min-width:200px/);
+  assert.match(css, /\\.player-musica iframe\\{[^}]*height:200px/);
+  assert.doesNotMatch(javascript, /autoplay=1/, "a reprodução não deve iniciar automaticamente");
+
+  const player = {
+    src: "",
+    removeAttribute(name) {
+      if (name === "src") this.src = "";
+    }
+  };
+  const containerState = { hidden: true };
+  const buttonState = {
+    attributes: {},
+    textContent: "🎵 Música Tema",
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+  };
+  const context = {
+    document: {
+      getElementById(id) {
+        return {
+          player,
+          playerContainer: containerState,
+          botaoMusica: buttonState
+        }[id];
+      }
+    }
+  };
+
+  runInNewContext("let playerMusicaAberto=false;\\n" + extractFunction(javascript, "musica"), context);
+  context.musica();
+
+  assert.equal(containerState.hidden, false);
+  assert.equal(player.src, "https://www.youtube-nocookie.com/embed/wtrFQLivuCg?playsinline=1");
+  assert.equal(buttonState.attributes["aria-expanded"], "true");
+  assert.equal(buttonState.textContent, "Ocultar música tema");
+
+  context.musica();
+  assert.equal(containerState.hidden, true);
+  assert.equal(player.src, "");
+  assert.equal(buttonState.attributes["aria-expanded"], "false");
+  assert.equal(buttonState.textContent, "🎵 Música Tema");
+});
