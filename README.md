@@ -41,7 +41,7 @@ O workflow de qualidade executa os mesmos testes em cada push e em pull requests
 - Favoritos persistentes e filtro combinado com a busca.
 - Indicadores verdes reutilizáveis de novidade, exibidos na primeira visita após uma publicação e dispensados ao abrir a funcionalidade ou na próxima visita.
 - Efeitos visuais de ativação de Stand com tratamento para preferência por movimento reduzido.
-- Reprodução de música tema mediante interação do visitante.
+- Player da música tema carregado sob demanda, visível e com controles próprios; usa o domínio de privacidade aprimorada do YouTube.
 
 ## Armazenamento e privacidade
 
@@ -65,6 +65,6 @@ A implementação ainda está concentrada em `index.html`, incluindo marcação,
 
 ## Limitações conhecidas
 
-- As imagens dos personagens iniciais usam miniaturas hospedadas externamente. Esses endereços podem deixar de funcionar; hospedagem local com fontes e permissões adequadas é uma melhoria pendente.
+- As imagens dos personagens iniciais usam miniaturas hospedadas externamente. Esses endereços podem deixar de funcionar; hospedagem local com fontes e permissões adequadas é uma melhoria pendente.\n- Ao abrir o player de música, o navegador se conecta ao YouTube. O domínio de privacidade aprimorada reduz a personalização baseada no conteúdo incorporado, mas não elimina a comunicação com o serviço.
 - Ainda não há testes de interação em navegador nem auditoria automatizada de acessibilidade. A suíte atual cobre verificações estáticas e contratos selecionados do JavaScript, incluindo a confirmação do commit e o tratamento de abortos nas operações IndexedDB.
 - O repositório não declara uma licença. A publicação pública não concede, por si só, permissão para reutilizar ou redistribuir o código e os recursos.
