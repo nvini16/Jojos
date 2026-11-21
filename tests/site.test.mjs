@@ -279,15 +279,15 @@ test("o player de música é carregado sob demanda em um iframe visível e acess
   assert.ok(button, "botão da música não encontrado");
   assert.equal(getAttribute(button, "aria-controls"), "playerContainer");
   assert.equal(getAttribute(button, "aria-expanded"), "false");
-  assert.ok(container && /\\bhidden\\b/.test(container), "player deve iniciar fechado");
+  assert.ok(container && /\bhidden\b/.test(container), "player deve iniciar fechado");
   assert.ok(iframe, "iframe do YouTube não encontrado");
   assert.equal(getAttribute(iframe, "title"), "Reprodutor da música tema do JOJOs");
   assert.equal(getAttribute(iframe, "width"), "356");
   assert.equal(getAttribute(iframe, "height"), "200");
   assert.equal(getAttribute(iframe, "referrerpolicy"), "strict-origin-when-cross-origin");
-  assert.doesNotMatch(iframe, /\\bsrc\\s*=/, "iframe não deve carregar antes da interação");
-  assert.match(css, /\\.player-musica\\{[^}]*min-width:200px/);
-  assert.match(css, /\\.player-musica iframe\\{[^}]*height:200px/);
+  assert.doesNotMatch(iframe, /\bsrc\s*=/, "iframe não deve carregar antes da interação");
+  assert.match(css, /\.player-musica\{[^}]*min-width:200px/);
+  assert.match(css, /\.player-musica iframe\{[^}]*height:200px/);
   assert.doesNotMatch(javascript, /autoplay=1/, "a reprodução não deve iniciar automaticamente");
 
   const player = {
@@ -316,7 +316,7 @@ test("o player de música é carregado sob demanda em um iframe visível e acess
     }
   };
 
-  runInNewContext("let playerMusicaAberto=false;\\n" + extractFunction(javascript, "musica"), context);
+  runInNewContext("let playerMusicaAberto=false;\n" + extractFunction(javascript, "musica"), context);
   context.musica();
 
   assert.equal(containerState.hidden, false);
