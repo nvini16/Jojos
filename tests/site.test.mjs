@@ -135,6 +135,56 @@ test("URLs de imagens ainda não carregadas são liberadas ao reconstruir a gale
   assert.deepEqual(revoked, ["blob:loaded", "blob:lazy-pending", "blob:another-pending"]);
 });
 
+test("fechar o formulário libera a URL temporária da prévia", () => {
+  const cleanup = extractFunction(javascript, "limparPreviewPersonagem");
+  const close = extractFunction(javascript, "fecharFormularioNovoPersonagem");
+  const revoked = [];
+  const preview = {
+    hidden: false,
+    removeAttribute(name) {
+      if (name === "src") this.src = "";
+    },
+    src: "blob:preview"
+  };
+  const panel = { hidden: false };
+  const button = {
+    attributes: {},
+    focused: false,
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    },
+    focus() {
+      this.focused = true;
+    }
+  };
+  const context = {
+    URL: {
+      revokeObjectURL(url) {
+        revoked.push(url);
+      }
+    },
+    previewNovoPersonagem: preview,
+    painelFormularioPersonagem: panel,
+    abrirFormularioPersonagem: button,
+    idPersonagemEditando: 42
+  };
+
+  runInNewContext(
+    ["let urlPreviewPersonagem = \"blob:preview\";", cleanup, close].join("\n"),
+    context
+  );
+  context.fecharFormularioNovoPersonagem();
+
+  assert.deepEqual(revoked, ["blob:preview"]);
+  assert.equal(runInNewContext("urlPreviewPersonagem", context), null);
+  assert.equal(preview.src, "");
+  assert.equal(preview.hidden, true);
+  assert.equal(panel.hidden, true);
+  assert.equal(button.attributes["aria-expanded"], "false");
+  assert.equal(button.focused, true);
+  assert.equal(context.idPersonagemEditando, null);
+});
+
 test("o diálogo de perfil mantém fechamento e restauração de foco", () => {
   assert.match(javascript, /dialogoPersonagem\.showModal\(\)/);
   assert.match(javascript, /dialogoPersonagem\.addEventListener\(\s*["']close["']/);
