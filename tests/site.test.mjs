@@ -380,3 +380,19 @@ test("o player de música é carregado sob demanda em um iframe visível e acess
   assert.equal(buttonState.attributes["aria-expanded"], "false");
   assert.equal(buttonState.textContent, "🎵 Música Tema");
 });
+
+test("os controles HTML não usam atributos de evento inline", () => {
+  const markup = html.slice(0, html.search(/<script\\b/i));
+  const inlineHandlers = [...markup.matchAll(/<([a-z][\\w:-]*)\\b([^>]*)>/gi)]
+    .flatMap(([, tag, attributes]) =>
+      [...attributes.matchAll(/(?:^|\\s)(on[a-z][a-z0-9_-]*)\\s*=/gi)]
+        .map(([attribute]) => tag + ":" + attribute.trim().replace(/\\s*=.*$/, ""))
+    );
+
+  assert.deepEqual(inlineHandlers, [], "a marcação não deve conter manipuladores de eventos inline");
+  assert.match(markup, /id="botaoMenu"/);
+  assert.match(markup, /id="botaoAtivarStand"/);
+  assert.match(javascript, /getElementById\\("botaoMenu"\\)\\.addEventListener\\("click",menu\\)/);
+  assert.match(javascript, /getElementById\\("botaoAtivarStand"\\)\\.addEventListener\\("click",stand\\)/);
+  assert.match(javascript, /getElementById\\("botaoMusica"\\)\\.addEventListener\\("click",musica\\)/);
+});
