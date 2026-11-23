@@ -1105,7 +1105,7 @@ font-size:32px;
 
 <div class="logo">JOJO</div>
 
-<button class="hamburguer" type="button" aria-label="Abrir menu" aria-controls="menu" aria-expanded="false" onclick="menu()">☰</button>
+<button id="botaoMenu" class="hamburguer" type="button" aria-label="Abrir menu" aria-controls="menu" aria-expanded="false">☰</button>
 
 <div class="menu" id="menu">
 <a href="#inicio">Início</a>
@@ -1123,11 +1123,11 @@ font-size:32px;
 
 <p>Escolha um personagem e libere seu Stand!</p>
 
-<button onclick="stand()">ATIVAR STAND</button>
+<button id="botaoAtivarStand" type="button">ATIVAR STAND</button>
 
 <br><br>
 
-<button id="botaoMusica" type="button" aria-controls="playerContainer" aria-expanded="false" onclick="musica()">🎵 Música Tema</button>
+<button id="botaoMusica" type="button" aria-controls="playerContainer" aria-expanded="false">🎵 Música Tema</button>
 <div class="player-musica" id="playerContainer" hidden>
 <iframe
 id="player"
@@ -1365,6 +1365,10 @@ if(!m.classList.contains("active")) return
 atualizarMenu(false)
 
 }
+
+document.getElementById("botaoMenu").addEventListener("click",menu)
+document.getElementById("botaoAtivarStand").addEventListener("click",stand)
+document.getElementById("botaoMusica").addEventListener("click",musica)
 
 document.querySelectorAll("#menu a").forEach(function(link){
 link.addEventListener("click",fecharMenu)
