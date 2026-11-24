@@ -381,31 +381,49 @@ test("o player de música é carregado sob demanda em um iframe visível e acess
   assert.equal(buttonState.textContent, "🎵 Música Tema");
 });
 
-test("a ativação do Stand anuncia a frase em uma região de status acessível", () => {
-  const status = getOpeningTags("div").find((attributes) =>
+test("a ativação do Stand anuncia a frase em uma região de status persistente", () => {
+  const effectMarkup = getOpeningTags("div").find((attributes) =>
     getAttribute(attributes, "id") === "standEffect"
   );
+  const statusMarkup = getOpeningTags("div").find((attributes) =>
+    getAttribute(attributes, "id") === "standAnnouncement"
+  );
 
-  assert.ok(status, "região de status do Stand não encontrada");
-  assert.equal(getAttribute(status, "role"), "status");
-  assert.equal(getAttribute(status, "aria-live"), "polite");
-  assert.equal(getAttribute(status, "aria-atomic"), "true");
+  assert.ok(effectMarkup, "camada visual do Stand não encontrada");
+  assert.equal(getAttribute(effectMarkup, "aria-hidden"), "true");
+  assert.ok(statusMarkup, "região de status acessível não encontrada");
+  assert.equal(getAttribute(statusMarkup, "role"), "status");
+  assert.equal(getAttribute(statusMarkup, "aria-live"), "polite");
+  assert.equal(getAttribute(statusMarkup, "aria-atomic"), "true");
+  assert.match(statusMarkup, /\bclass=["']sr-only["']/);
+  assert.match(
+    html,
+    /<div id="standEffect" aria-hidden="true"><\/div>\s*<div id="standAnnouncement"/,
+    "a região de status precisa ficar fora da camada visual que usa visibility:hidden"
+  );
 
   const source = extractFunction(javascript, "personagem");
-  const children = [];
+  const visualChildren = [];
   const effect = {
     className: "",
-    attributes: {},
     style: { setProperty() {} },
     classList: { add() {} },
-    replaceChildren() { children.length = 0; },
-    appendChild(node) { children.push(node); },
-    setAttribute(name, value) { this.attributes[name] = value; }
+    replaceChildren() { visualChildren.length = 0; },
+    appendChild(node) { visualChildren.push(node); }
+  };
+  const announcedNodes = [];
+  const announcer = {
+    replaceChildren(...nodes) {
+      announcedNodes.splice(0, announcedNodes.length, ...nodes);
+    }
   };
   const context = {
     document: {
       getElementById(id) {
-        return id === "standEffect" ? effect : null;
+        return {
+          standEffect: effect,
+          standAnnouncement: announcer
+        }[id];
       },
       createElement(tagName) {
         return {
@@ -418,6 +436,9 @@ test("a ativação do Stand anuncia a frase em uma região de status acessível"
           setAttribute(name, value) { this.attributes[name] = value; },
           appendChild(child) { this.children.push(child); }
         };
+      },
+      createTextNode(text) {
+        return { nodeType: 3, textContent: text };
       }
     },
     estilosStand: {
@@ -433,12 +454,16 @@ test("a ativação do Stand anuncia a frase em uma região de status acessível"
   runInNewContext(source, context);
   context.personagem({ nome: "Personagem personalizado", stand: "ORA ORA", chave: "custom" });
 
-  assert.equal(children.length, 2, "efeito visual e anúncio textual devem ser separados");
-  assert.equal(children[0].className, "stand-phrase");
-  assert.equal(children[0].attributes["aria-hidden"], "true");
-  assert.equal(children[1].className, "sr-only");
-  assert.equal(children[1].textContent, "ORA ORA");
-  assert.equal(effect.attributes["aria-label"], undefined);
+  assert.equal(visualChildren.length, 1);
+  assert.equal(visualChildren[0].className, "stand-phrase");
+  assert.equal(visualChildren[0].attributes["aria-hidden"], "true");
+  assert.equal(announcedNodes.length, 1);
+  assert.equal(announcedNodes[0].textContent, "ORA ORA");
+
+  const primeiroAnuncio = announcedNodes[0];
+  context.personagem({ nome: "Personagem personalizado", stand: "ORA ORA", chave: "custom" });
+  assert.notEqual(announcedNodes[0], primeiroAnuncio, "uma nova ativação deve gerar uma nova mutação acessível");
+  assert.equal(announcedNodes[0].textContent, "ORA ORA");
 });
 
 test("os controles HTML não usam atributos de evento inline", () => {
