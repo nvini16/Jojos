@@ -1231,7 +1231,8 @@ allowfullscreen>
 </div>
 </dialog>
 
-<div id="standEffect" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="standEffect" aria-hidden="true"></div>
+<div id="standAnnouncement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <footer>
 Site criado por um desocupado 😉
@@ -1278,6 +1279,7 @@ personagem({nome:"Dio Brando",stand:"ZA WARUDO",chave:"base-dio"})
 
 function personagem(registro){
 const efeito=document.getElementById("standEffect")
+const anuncio=document.getElementById("standAnnouncement")
 const estilo=estilosStand[registro.chave] || estilosStand.custom
 const frase=String(registro.stand || registro.nome || "STAND").trim()
 if(!frase) return
@@ -1300,11 +1302,8 @@ caractere.textContent=letra===" " ? "\u00a0" : letra
 caractere.style.setProperty("--letter-delay",(indice*48)+"ms")
 texto.appendChild(caractere)
 })
-const anuncioAcessivel=document.createElement("span")
-anuncioAcessivel.className="sr-only"
-anuncioAcessivel.textContent=frase
 efeito.appendChild(texto)
-efeito.appendChild(anuncioAcessivel)
+anuncio.replaceChildren(document.createTextNode(frase))
 efeito.classList.add("is-active")
 
 criarParticulasStand(efeito,estilo)
