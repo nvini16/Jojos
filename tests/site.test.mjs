@@ -381,6 +381,66 @@ test("o player de música é carregado sob demanda em um iframe visível e acess
   assert.equal(buttonState.textContent, "🎵 Música Tema");
 });
 
+test("a ativação do Stand anuncia a frase em uma região de status acessível", () => {
+  const status = getOpeningTags("div").find((attributes) =>
+    getAttribute(attributes, "id") === "standEffect"
+  );
+
+  assert.ok(status, "região de status do Stand não encontrada");
+  assert.equal(getAttribute(status, "role"), "status");
+  assert.equal(getAttribute(status, "aria-live"), "polite");
+  assert.equal(getAttribute(status, "aria-atomic"), "true");
+
+  const source = extractFunction(javascript, "personagem");
+  const children = [];
+  const effect = {
+    className: "",
+    attributes: {},
+    style: { setProperty() {} },
+    classList: { add() {} },
+    replaceChildren() { children.length = 0; },
+    appendChild(node) { children.push(node); },
+    setAttribute(name, value) { this.attributes[name] = value; }
+  };
+  const context = {
+    document: {
+      getElementById(id) {
+        return id === "standEffect" ? effect : null;
+      },
+      createElement(tagName) {
+        return {
+          tagName,
+          className: "",
+          textContent: "",
+          attributes: {},
+          children: [],
+          style: { setProperty() {} },
+          setAttribute(name, value) { this.attributes[name] = value; },
+          appendChild(child) { this.children.push(child); }
+        };
+      }
+    },
+    estilosStand: {
+      custom: { classe: "fx-custom", cor: "teal", brilho: "glow", particulas: 0 }
+    },
+    prefereMovimentoReduzido: { matches: true },
+    temporizadorStand: null,
+    clearTimeout() {},
+    setTimeout() { return 1; },
+    criarParticulasStand() {}
+  };
+
+  runInNewContext(source, context);
+  context.personagem({ nome: "Personagem personalizado", stand: "ORA ORA", chave: "custom" });
+
+  assert.equal(children.length, 2, "efeito visual e anúncio textual devem ser separados");
+  assert.equal(children[0].className, "stand-phrase");
+  assert.equal(children[0].attributes["aria-hidden"], "true");
+  assert.equal(children[1].className, "sr-only");
+  assert.equal(children[1].textContent, "ORA ORA");
+  assert.equal(effect.attributes["aria-label"], undefined);
+});
+
 test("os controles HTML não usam atributos de evento inline", () => {
   const markup = html.slice(0, html.search(/<script\b/i));
   const inlineHandlers = [...markup.matchAll(/<([a-z][\w:-]*)\b([^>]*)>/gi)]
