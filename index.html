@@ -1300,8 +1300,11 @@ caractere.textContent=letra===" " ? "\u00a0" : letra
 caractere.style.setProperty("--letter-delay",(indice*48)+"ms")
 texto.appendChild(caractere)
 })
+const anuncioAcessivel=document.createElement("span")
+anuncioAcessivel.className="sr-only"
+anuncioAcessivel.textContent=frase
 efeito.appendChild(texto)
-efeito.setAttribute("aria-label",frase)
+efeito.appendChild(anuncioAcessivel)
 efeito.classList.add("is-active")
 
 criarParticulasStand(efeito,estilo)
