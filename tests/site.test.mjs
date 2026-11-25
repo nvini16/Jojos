@@ -29,8 +29,9 @@ function getOpeningTags(name) {
 
 
 function extractFunction(source, name) {
-  const start = source.indexOf("function " + name + "(");
+  let start = source.indexOf("function " + name + "(");
   assert.notEqual(start, -1, "função " + name + " não encontrada");
+  if (source.slice(Math.max(0, start - 6), start) === "async ") start -= 6;
 
   const bodyStart = source.indexOf("{", start);
   let depth = 0;
