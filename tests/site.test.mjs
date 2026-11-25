@@ -481,3 +481,109 @@ test("os controles HTML não usam atributos de evento inline", () => {
   assert.match(javascript, /getElementById\("botaoAtivarStand"\)\.addEventListener\("click",stand\)/);
   assert.match(javascript, /getElementById\("botaoMusica"\)\.addEventListener\("click",musica\)/);
 });
+
+
+test("o formulário aguarda o IndexedDB e comunica falhas em região visível", async () => {
+  const addButton = getOpeningTags("button").find((attributes) =>
+    getAttribute(attributes, "id") === "abrirFormularioPersonagem"
+  );
+  const statusMarkup = getOpeningTags("p").find((attributes) =>
+    getAttribute(attributes, "id") === "statusArmazenamento"
+  );
+
+  assert.ok(addButton && /\\bdisabled\\b/.test(addButton), "cadastro deve iniciar indisponível");
+  assert.ok(statusMarkup, "região de status do armazenamento não encontrada");
+  assert.equal(getAttribute(statusMarkup, "role"), "status");
+  assert.equal(getAttribute(statusMarkup, "aria-live"), "polite");
+  assert.ok(/\\bhidden\\b/.test(statusMarkup), "mensagem deve iniciar oculta");
+  assert.match(css, /\\.botao-adicionar:disabled\\{[^}]*cursor:wait/);
+  assert.match(css, /\\.status-armazenamento\\[hidden\\]\\{display:none;\\}/);
+
+  const source = extractFunction(javascript, "carregarPersonagensSalvos");
+  const successContext = {
+    bancoPersonagens: null,
+    abrirBancoPersonagens: async () => ({ ready: true }),
+    garantirPersonagensIniciais: async () => {},
+    renderizarPersonagens: async () => {},
+    abrirFormularioPersonagem: { disabled: true },
+    statusArmazenamento: { hidden: false, textContent: "Carregando..." },
+    console: { error() {} }
+  };
+  runInNewContext(source, successContext);
+  await successContext.carregarPersonagensSalvos();
+
+  assert.equal(successContext.abrirFormularioPersonagem.disabled, false);
+  assert.equal(successContext.statusArmazenamento.hidden, true);
+  assert.equal(successContext.statusArmazenamento.textContent, "");
+
+  const failureContext = {
+    bancoPersonagens: null,
+    abrirBancoPersonagens: async () => { throw new Error("NotAllowedError"); },
+    garantirPersonagensIniciais: async () => {},
+    renderizarPersonagens: async () => {},
+    abrirFormularioPersonagem: { disabled: true },
+    statusArmazenamento: { hidden: true, textContent: "" },
+    console: { error() {} }
+  };
+  runInNewContext(source, failureContext);
+  await failureContext.carregarPersonagensSalvos();
+
+  assert.equal(failureContext.abrirFormularioPersonagem.disabled, true);
+  assert.equal(failureContext.statusArmazenamento.hidden, false);
+  assert.match(failureContext.statusArmazenamento.textContent, /armazenamento local/i);
+});
+
+test("bloqueio de atualização do IndexedDB é comunicado e conexão tardia é fechada", async () => {
+  const source = extractFunction(javascript, "abrirBancoPersonagens");
+  const request = {};
+  const context = {
+    indexedDB: {
+      open(name, version) {
+        assert.equal(name, "jojos-personagens");
+        assert.equal(version, 2);
+        return request;
+      }
+    },
+    bancoPersonagens: null,
+    abrirFormularioPersonagem: { disabled: false },
+    statusArmazenamento: { hidden: true, textContent: "" }
+  };
+  runInNewContext(source, context);
+
+  const pending = context.abrirBancoPersonagens();
+  request.onblocked();
+  await assert.rejects(pending, /outra aba/i);
+
+  const lateConnection = { closed: false, close() { this.closed = true; } };
+  request.result = lateConnection;
+  request.onsuccess();
+  assert.equal(lateConnection.closed, true);
+});
+
+test("uma atualização do esquema em outra aba fecha a conexão antiga e bloqueia novas gravações", async () => {
+  const source = extractFunction(javascript, "abrirBancoPersonagens");
+  const request = {};
+  const connection = {
+    closed: false,
+    close() { this.closed = true; }
+  };
+  const context = {
+    indexedDB: { open() { return request; } },
+    bancoPersonagens: null,
+    abrirFormularioPersonagem: { disabled: false },
+    statusArmazenamento: { hidden: true, textContent: "" }
+  };
+  runInNewContext(source, context);
+
+  const pending = context.abrirBancoPersonagens();
+  request.result = connection;
+  request.onsuccess();
+  const opened = await pending;
+  context.bancoPersonagens = opened;
+  connection.onversionchange();
+
+  assert.equal(connection.closed, true);
+  assert.equal(context.abrirFormularioPersonagem.disabled, true);
+  assert.equal(context.statusArmazenamento.hidden, false);
+  assert.match(context.statusArmazenamento.textContent, /recarregue/i);
+});
