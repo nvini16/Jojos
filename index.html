@@ -502,6 +502,24 @@ cursor:pointer;
 }
 
 .botao-adicionar:hover{background:var(--color-white);color:var(--color-text-dark);}
+.botao-adicionar:disabled{
+opacity:.6;
+cursor:wait;
+}
+
+.status-armazenamento{
+width:min(100% - 32px,560px);
+margin:14px auto 0;
+padding:10px 14px;
+border:1px solid var(--overlay-white-35);
+border-radius:10px;
+background:var(--overlay-black-25);
+color:var(--color-white);
+line-height:1.5;
+text-align:center;
+}
+
+.status-armazenamento[hidden]{display:none;}
 
 .botao-adicionar:focus-visible,
 .formulario-personagem button:focus-visible,
@@ -1154,8 +1172,9 @@ allowfullscreen>
 </div>
 
 <div class="acoes-galeria">
-<button class="botao-adicionar" id="abrirFormularioPersonagem" type="button" aria-expanded="false" aria-controls="painelFormularioPersonagem">+ Adicionar personagem</button>
+<button class="botao-adicionar" id="abrirFormularioPersonagem" type="button" aria-expanded="false" aria-controls="painelFormularioPersonagem" disabled>+ Adicionar personagem</button>
 </div>
+<p class="status-armazenamento" id="statusArmazenamento" role="status" aria-live="polite" hidden></p>
 
 <section class="painel-formulario" id="painelFormularioPersonagem" aria-labelledby="tituloFormularioPersonagem" hidden>
 <div class="cabecalho-formulario">
@@ -1430,6 +1449,7 @@ document.querySelector(".hamburguer").focus()
 
 // PERSONAGENS: registros locais no IndexedDB; cartões base e personalizados usam o mesmo fluxo.
 const abrirFormularioPersonagem=document.getElementById("abrirFormularioPersonagem")
+const statusArmazenamento=document.getElementById("statusArmazenamento")
 const painelFormularioPersonagem=document.getElementById("painelFormularioPersonagem")
 const formularioPersonagem=document.getElementById("formularioPersonagem")
 const nomeNovoPersonagem=document.getElementById("nomeNovoPersonagem")
@@ -1513,15 +1533,43 @@ indicador.remove()
 
 function abrirBancoPersonagens(){
 return new Promise(function(resolve,reject){
+let finalizada=false
 const requisicao=indexedDB.open("jojos-personagens",2)
+function rejeitar(erro){
+if(finalizada) return
+finalizada=true
+reject(erro || new Error("Não foi possível abrir o armazenamento local."))
+}
 requisicao.onupgradeneeded=function(){
 const banco=requisicao.result
 if(!banco.objectStoreNames.contains("personagens")){
 banco.createObjectStore("personagens",{keyPath:"id",autoIncrement:true})
 }
 }
-requisicao.onsuccess=function(){resolve(requisicao.result)}
-requisicao.onerror=function(){reject(requisicao.error)}
+requisicao.onblocked=function(){
+const erro=new Error("O banco está sendo atualizado em outra aba. Feche as outras abas do JOJOs e recarregue esta página.")
+erro.name="BlockedError"
+rejeitar(erro)
+}
+requisicao.onsuccess=function(){
+const banco=requisicao.result
+if(finalizada){
+banco.close()
+return
+}
+finalizada=true
+banco.onversionchange=function(){
+banco.close()
+if(bancoPersonagens===banco){
+bancoPersonagens=null
+abrirFormularioPersonagem.disabled=true
+statusArmazenamento.textContent="O armazenamento foi atualizado em outra aba. Recarregue esta página para continuar."
+statusArmazenamento.hidden=false
+}
+}
+resolve(banco)
+}
+requisicao.onerror=function(){rejeitar(requisicao.error)}
 })
 }
 
@@ -1852,9 +1900,16 @@ try{
 bancoPersonagens=await abrirBancoPersonagens()
 await garantirPersonagensIniciais()
 await renderizarPersonagens()
+abrirFormularioPersonagem.disabled=false
+statusArmazenamento.textContent=""
+statusArmazenamento.hidden=true
 }catch(erro){
 console.error("Não foi possível carregar os personagens:",erro)
-mensagemFormularioPersonagem.textContent="O armazenamento local não está disponível neste navegador."
+abrirFormularioPersonagem.disabled=true
+statusArmazenamento.textContent=erro && erro.name==="BlockedError"
+? erro.message
+: "Não foi possível acessar o armazenamento local. Verifique as permissões do navegador e recarregue a página."
+statusArmazenamento.hidden=false
 }
 }
 
