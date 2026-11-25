@@ -48,6 +48,7 @@ O workflow de qualidade executa os mesmos testes em cada push e em pull requests
 Os dados são armazenados localmente no navegador:
 
 - Personagens personalizados e imagens: IndexedDB, banco `jojos-personagens`.
+- O formulário de cadastro só é habilitado após a inicialização do banco. Atualizações bloqueadas por outra aba são comunicadas, e conexões antigas são fechadas para permitir migrações futuras.
 - Os quatro personagens iniciais são verificados e inseridos em uma única transação de escrita, evitando duplicações quando mais de uma aba inicia o site ao mesmo tempo.
 - Favoritos: localStorage, chave `jojos-favoritos-v1`.
 
