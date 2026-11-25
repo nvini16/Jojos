@@ -491,13 +491,13 @@ test("o formulário aguarda o IndexedDB e comunica falhas em região visível", 
     getAttribute(attributes, "id") === "statusArmazenamento"
   );
 
-  assert.ok(addButton && /\\bdisabled\\b/.test(addButton), "cadastro deve iniciar indisponível");
+  assert.ok(addButton && /\bdisabled\b/.test(addButton), "cadastro deve iniciar indisponível");
   assert.ok(statusMarkup, "região de status do armazenamento não encontrada");
   assert.equal(getAttribute(statusMarkup, "role"), "status");
   assert.equal(getAttribute(statusMarkup, "aria-live"), "polite");
-  assert.ok(/\\bhidden\\b/.test(statusMarkup), "mensagem deve iniciar oculta");
-  assert.match(css, /\\.botao-adicionar:disabled\\{[^}]*cursor:wait/);
-  assert.match(css, /\\.status-armazenamento\\[hidden\\]\\{display:none;\\}/);
+  assert.ok(/\bhidden\b/.test(statusMarkup), "mensagem deve iniciar oculta");
+  assert.match(css, /\.botao-adicionar:disabled\{[^}]*cursor:wait/);
+  assert.match(css, /\.status-armazenamento\[hidden\]\{display:none;\}/);
 
   const source = extractFunction(javascript, "carregarPersonagensSalvos");
   const successContext = {
