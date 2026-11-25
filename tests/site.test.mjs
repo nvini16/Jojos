@@ -588,3 +588,17 @@ test("uma atualização do esquema em outra aba fecha a conexão antiga e bloque
   assert.equal(context.statusArmazenamento.hidden, false);
   assert.match(context.statusArmazenamento.textContent, /recarregue/i);
 });
+
+
+test("o sorteio seleciona um personagem visível, evita repetição imediata e anuncia o resultado", () => {
+  assert.match(html, /id="sortearPersonagem"/, "botão de sorteio não encontrado");
+  assert.match(css, /\.botao-sorteio-personagem:focus-visible/);
+  assert.match(css, /prefers-reduced-motion:reduce[\s\S]*?\.card-scene\.personagem-sorteado\{animation:none/);
+  const handler = javascript.slice(javascript.indexOf('sortearPersonagem.addEventListener("click"'), javascript.indexOf('registrarNovidade("perfil-personagens"'));
+  assert.match(handler, /\.card-scene:not\(\[hidden\]\)/);
+  assert.match(handler, /ultimoPersonagemSorteado/);
+  assert.match(handler, /resultadoBusca\.textContent="Personagem sorteado: "/);
+  assert.match(handler, /scrollIntoView/);
+  assert.match(handler, /\.card-frente"\)\.focus/);
+  assert.match(handler, /candidatos\.length===0/);
+});
