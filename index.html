@@ -450,8 +450,31 @@ outline-offset:-5px;
 
 .filtros-galeria{
 display:flex;
+flex-wrap:wrap;
 justify-content:center;
+gap:10px;
 margin-top:14px;
+}
+.botao-sorteio-personagem{
+padding:9px 15px;
+border:1px solid var(--overlay-white-35);
+border-radius:999px;
+background:linear-gradient(120deg,var(--color-purple),var(--color-rose));
+color:var(--color-white);
+font:inherit;
+font-weight:bold;
+cursor:pointer;
+transition:transform .2s,filter .2s;
+}
+.botao-sorteio-personagem:hover{transform:translateY(-2px);filter:brightness(1.15);}
+.botao-sorteio-personagem:focus-visible{outline:3px solid var(--color-yellow);outline-offset:3px;}
+.card-scene.personagem-sorteado{animation:destaqueSorteio 1.5s ease-out;}
+@keyframes destaqueSorteio{
+0%,100%{filter:none;box-shadow:none;}
+25%,65%{filter:brightness(1.25);box-shadow:0 0 0 3px var(--color-yellow),0 0 28px var(--overlay-yellow-50);}
+}
+@media(prefers-reduced-motion:reduce){
+.card-scene.personagem-sorteado{animation:none;outline:3px solid var(--color-yellow);outline-offset:4px;}
 }
 
 .botao-filtro-favoritos{
@@ -1169,6 +1192,7 @@ allowfullscreen>
 <p id="resultadoBusca" role="status" aria-live="polite" style="margin-top:12px;">4 personagens encontrados</p>
 <div class="filtros-galeria">
 <button class="botao-filtro-favoritos" id="alternarFiltroFavoritos" type="button" aria-pressed="false">☆ Mostrar favoritos</button>
+<button class="botao-sorteio-personagem" id="sortearPersonagem" type="button">✦ Personagem aleatório</button>
 </div>
 
 <div class="acoes-galeria">
@@ -2129,6 +2153,30 @@ alternarFiltroFavoritos.setAttribute("aria-pressed",String(somenteFavoritos))
 alternarFiltroFavoritos.classList.toggle("ativo",somenteFavoritos)
 alternarFiltroFavoritos.textContent=somenteFavoritos ? "★ Exibindo favoritos" : "☆ Mostrar favoritos"
 atualizarResultadoBusca()
+})
+
+const sortearPersonagem=document.getElementById("sortearPersonagem")
+let ultimoPersonagemSorteado=null
+sortearPersonagem.addEventListener("click",function(){
+const candidatos=Array.from(gradePersonagens.querySelectorAll(".card-scene:not([hidden])"))
+if(candidatos.length===0){
+resultadoBusca.textContent="Não há personagens disponíveis para sortear com os filtros atuais."
+return
+}
+const opcoes=candidatos.length>1
+? candidatos.filter(function(card){return card.dataset.personagemId!==ultimoPersonagemSorteado})
+: candidatos
+const escolhido=opcoes[Math.floor(Math.random()*opcoes.length)]
+ultimoPersonagemSorteado=escolhido.dataset.personagemId
+const nome=escolhido.querySelector(".card-frente h3").textContent
+candidatos.forEach(function(card){card.classList.remove("personagem-sorteado")})
+escolhido.classList.add("personagem-sorteado")
+escolhido.addEventListener("animationend",function(){
+escolhido.classList.remove("personagem-sorteado")
+},{once:true})
+escolhido.scrollIntoView({behavior:prefereMovimentoReduzido.matches ? "auto" : "smooth",block:"center"})
+escolhido.querySelector(".card-frente").focus({preventScroll:true})
+resultadoBusca.textContent="Personagem sorteado: "+nome+". Acesse o cartão para ver o perfil e as opções."
 })
 registrarNovidade("perfil-personagens","1")
 carregarFavoritos()
